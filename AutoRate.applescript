@@ -18,59 +18,6 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
--- Matematica: http://scriptbuilders.net/files/matematica3.0.html
-script Matematica
-	property e : 2.718281828459
-	
-	on abs(x) -- absolute value of  the number x.
-		if x < 0 then return -x
-		return x
-	end abs
-	
-	on loge(x) -- computes the natural log of x.
-		set sinal to 1
-		if x = 1 then
-			return 0
-		else if x < 1 then
-			set x to 1 / x
-			set sinal to -1
-		end if
-		set {loga, j, zz} to {1, 1, 1}
-		try
-			set {astid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, "E"}
-			set zpow to (text item 2 of (x as text)) as number
-			set AppleScript's text item delimiters to astid
-		on error
-			set AppleScript's text item delimiters to getdec()
-			set zpow to (length of (text item 1 of (x as text))) - 1
-			set AppleScript's text item delimiters to astid
-		end try
-		set {x, logex} to {x / (e ^ (2.3 * zpow)), zpow * 2.3} -- this part takes care of the computation of very large numbers.
-		--Selects different points for Taylor series, this makes the computation more precise and faster. 
-		
-		if x > 1.8 and x < 5.2 then
-			set {zz, logex} to {e ^ 1, logex + 1}
-		else if x > 5.2 then
-			set {zz, logex} to {e ^ 2, logex + 2}
-		end if
-		
-		set erro to 1.0E-19
-		repeat while loga > erro
-			set loga to logex
-			set logex to (x - zz) ^ j * ((-1) ^ (j - 1)) / (j * (zz ^ j)) + logex
-			set loga to abs(logex - loga)
-			set j to j + 1
-		end repeat
-		return sinal * logex
-	end loge
-	
-	
-	on getdec() --  introduced in the second release
-		return (0.1 as string)'s item 2
-	end getdec
-end script
-
 -- Globals
 global running
 global averageFrequency
@@ -292,9 +239,6 @@ script AutoRateController
 							-- Combine ratings according to user preferences
 							set theRating to (theFrequencyRating * (1.0 - ratingBias)) + (thePlayCountRating * ratingBias)
 							
-							-- Log transform rating and scale (credit to Ilari Scheinin)
-							if theRating ­ 0 then tell Matematica to set theRating to (loge(theRating) * 100) / 4.605170185988 -- (loge(100))
-							
 							-- Factor in memory
 							set theRating to ((rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
 							
@@ -333,7 +277,7 @@ script AutoRateController
 			tell text view "reportText" of scroll view "reportTextScroll" of window "reportPanel"
 				set contents to (analysisTrackErrors & rateTrackErrors)
 			end tell
-			display panel window "reportPanel" attached to window "window"
+			display panel window "reportPanel" attached to window "main"
 		end if
 		
 		endProgress()
@@ -343,7 +287,7 @@ script AutoRateController
 	end run
 	
 	on getPlaylist()
-		tell popup button "playlist" of window "window" to set thePlaylistName to title of current menu item
+		tell user defaults to set thePlaylistName to contents of default entry "playlist"
 		if thePlaylistName = "Entire library" then
 			tell application "iTunes" to return library playlist 1
 		else
@@ -357,59 +301,59 @@ script AutoRateController
 	end abort
 	
 	on updateUI()
-		tell window "window" to update
+		tell window "main" to update
 	end updateUI
 	
 	on setProgressLimit(limit)
-		tell progress indicator "progress" of window "window"
+		tell progress indicator "progress" of window "main"
 			set indeterminate to false
 			set maximum value to limit
 		end tell
 	end setProgressLimit
 	
 	on startIndeterminateProgress()
-		tell progress indicator "progress" of window "window"
+		tell progress indicator "progress" of window "main"
 			set indeterminate to true
 			start
 		end tell
 	end startIndeterminateProgress
 	
 	on startProgress()
-		tell progress indicator "progress" of window "window" to start
+		tell progress indicator "progress" of window "main" to start
 	end startProgress
 	
 	on incrementProgress()
-		tell progress indicator "progress" of window "window" to increment by 1
+		tell progress indicator "progress" of window "main" to increment by 1
 	end incrementProgress
 	
 	on endProgress()
-		tell progress indicator "progress" of window "window"
+		tell progress indicator "progress" of window "main"
 			stop
 			set contents to 0
 		end tell
 	end endProgress
 	
 	on setMainMessage(message)
-		set contents of text field "mainMessage" of window "window" to message
+		set contents of text field "mainMessage" of window "main" to message
 	end setMainMessage
 	
 	on setSecondaryMessage(message)
-		set contents of text field "secondaryMessage" of window "window" to message
+		set contents of text field "secondaryMessage" of window "main" to message
 	end setSecondaryMessage
 	
 	on startButton()
-		set title of button "button" of window "window" to "Cancel"
+		set title of button "button" of window "main" to "Cancel"
 	end startButton
 	
 	on endingButton()
-		tell button "button" of window "window"
+		tell button "button" of window "main"
 			set title to "Aborting"
 			set enabled to false
 		end tell
 	end endingButton
 	
 	on endButton()
-		tell button "button" of window "window"
+		tell button "button" of window "main"
 			set title to "Begin"
 			set enabled to true
 		end tell
@@ -423,9 +367,7 @@ script AutoRateController
 	on setup()
 		set running to false
 		
-		tell menu of popup button "playlist" of window "window"
-			delete every menu item
-			make new menu item at end of menu items with properties {title:"Entire library"}
+		tell menu of popup button "playlist" of drawer "drawer" of window "main"
 			tell application "iTunes" to set thePlaylists to user playlists
 			repeat with thePlaylist in thePlaylists
 				make new menu item at end of menu items with properties {title:name of thePlaylist}
@@ -450,6 +392,7 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"cacheTime", contents:7}
 			make new default entry at end of default entries with properties {name:"ratingBias", contents:0.5}
 			make new default entry at end of default entries with properties {name:"ratingMemory", contents:0.1}
+			make new default entry at end of default entries with properties {name:"playlist", contents:"Entire library"}
 			register
 		end tell
 	end initSettings
@@ -530,7 +473,16 @@ on should quit after last window closed theObject
 end should quit after last window closed
 
 on action theObject
-	if name of theObject is "ratingBiasSlider" then
-		tell AutoRateController to clearCache()
-	end if
+	(*Add your script here.*)
 end action
+
+on awake from nib theObject
+	if name of theObject is "drawer" then
+		set content size of theObject to {440, 150}
+	end if
+end awake from nib
+
+on will open theObject
+	set state of button "showPrefs" of window "main" to on state
+end will open
+
