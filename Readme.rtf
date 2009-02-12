@@ -9,10 +9,10 @@
 {\author Mike Tyson}}\paperw11905\paperh16837\margl1440\margr1440\vieww12820\viewh11040\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f0\b\fs36 \cf0 \ul \ulc0 AutoRate v1.4.2
+\f0\b\fs36 \cf0 \ul \ulc0 AutoRate v1.4.1
 \f1\b0\fs24 \ulnone \
 
-\f2\i\fs20 19 June 2007
+\f2\i\fs20 14 June 2007
 \f1\i0\fs24 \
 \
 This application sets the rating for all tracks in your iTunes library according to how often each track is played, and how often each track is skipped.\
@@ -24,11 +24,8 @@ The formula uses a combination of play and skip frequency (averaged out over the
 \f1\b0 \
 \
 \pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls1\ilvl0\cf0 {\listtext	\'a5	}Moved preferences to a drawer\
-{\listtext	\'a5	}Moved playlist selection to drawer\
-{\listtext	\'a5	}Removed log transform, now unnecessary\
-{\listtext	\'a5	}Save window position\
-{\listtext	\'a5	}Save selected playlist in preferences\
+\ls1\ilvl0\cf0 {\listtext	\'a5	}Formula tweaking preferences - set bias between just using play/skip frequencies (which will bias ratings towards new tracks) and play count frequencies (which will bias towards older tracks), and set the degree to which existing ratings are used in the new rating.\
+{\listtext	\'a5	}Slight changes to the way skipping is factored in to ratings\
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 
@@ -41,9 +38,8 @@ By default, AutoRate will only rate tracks that you have not rated.  Thus, if yo
 \f0\b Automatic rating
 \f1\b0 \
 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f2\i \cf0 Rate Now.scpt
+\f2\i Rate Now.scpt
 \f1\i0  is an Applescript that launches AutoRate, immediately begins the rating process, and quits after completion.  This can be run regularly from 
 \f2\i cron
 \f1\i0 , for example.\
