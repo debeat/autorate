@@ -1,8 +1,5 @@
-#summary One-sentence summary of this page.
-
-*Discussion about statistical analysis on groups of songs rather than entire library.*
+#summary Discussion about statistical analysis on groups of songs rather than entire library.
 
 _Brandon_
 
 Hey what do you think about that business of being able to choose groups of genres to have their own stats for rating? I am thinking that we make the user define tags that will group songs using the grouping field in iTunes. Using a program like quicktag (or manually) you can add tags like <AutoRate Group 1> to the grouping field in iTunes. Then in the analysis we could simply break down the track list into sub lists of the tracks in each group and grab separate min/max values for each group. Naturally if there are too few tracks in a group the analysis will not mean much, but buyer beware. It adds complication and personally I don;t think it would be al that useful, but it would allow for robust handling of the analysis, like excluding certain songs etc.
-
