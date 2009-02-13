@@ -58,7 +58,7 @@ script AutoRateController
 		set rateTrackErrors to ""
 		set playlistTracks to {}
 		
-		setMainMessage("Loading playlist tracks…")
+		setMainMessage("Loading playlist tracks...")
 		startIndeterminateProgress()
 		updateUI()
 		
@@ -164,7 +164,7 @@ script AutoRateController
 							set analysisTrackErrors to analysisTrackErrors & theTrackLocation & (ASCII character 10)
 						end if
 						
-						if errStr ≠ "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
+						if errStr is not "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
 						
 					end try
 					
@@ -417,7 +417,7 @@ script AutoRateController
 							set rateTrackErrors to rateTrackErrors & theTrackLocation & (ASCII character 10)
 						end if
 						
-						if errStr ≠ "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
+						if errStr is not "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
 						
 					end try
 				end repeat
@@ -425,7 +425,7 @@ script AutoRateController
 		end tell
 		
 		-- log "Finished"
-		if analysisTrackErrors ≠ "" or rateTrackErrors ≠ "" then
+		if analysisTrackErrors is not "" or rateTrackErrors is not "" then
 			tell text view "reportText" of scroll view "reportTextScroll" of window "reportPanel"
 				set contents to (analysisTrackErrors & rateTrackErrors)
 			end tell
@@ -572,7 +572,7 @@ script AutoRateController
 			-- Read settings
 			
 			set lastAnalysisDateStr to contents of default entry "lastAnalysisDate"
-			if lastAnalysisDateStr ≠ "" then set lastAnalysisDate to lastAnalysisDateStr as date
+			if lastAnalysisDateStr is not "" then set lastAnalysisDate to lastAnalysisDateStr as date
 			set wholeStarRatings to contents of default entry "wholeStarRatings" as boolean
 			set rateUnratedTracksOnly to contents of default entry "rateUnratedTracksOnly" as boolean
 			set cacheResults to contents of default entry "cacheResults" as boolean
