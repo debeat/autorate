@@ -4,7 +4,7 @@
 --  Copyright 2007 Michael Tyson. 
 --  http://michael.tyson.id.au
 --
---Additions and modifications by Brandon Mol. 
+-- Additions and modifications by Brandon Mol. 
 --
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 -- Globals
-global running
+global isRunning
 global lastAnalysisDate
 global wholeStarRatings
 global rateUnratedTracksOnly
@@ -58,7 +58,7 @@ script AutoRateController
 		set rateTrackErrors to ""
 		set playlistTracks to {}
 		
-		setMainMessage("Loading playlist tracks‚Ä¶")
+		setMainMessage("Loading playlist tracks…")
 		startIndeterminateProgress()
 		updateUI()
 		
@@ -85,14 +85,13 @@ script AutoRateController
 						set playlistTracks to file tracks in thePlaylist
 					end timeout
 				on error errStr number errNumber
-					-- log "error " & errStr & ", number " & (errNumber as string)
 					display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
 					tell AutoRateController
 						endProgress()
 						endButton()
 						endLabel()
 					end tell
-					set running to false
+					set isRunning to false
 					return
 				end try
 				
@@ -110,7 +109,7 @@ script AutoRateController
 				set theTrackCount to 0
 				set numAnalysed to 0
 				repeat with theTrack in theTracks
-					if not running then exit repeat
+					if not isRunning then exit repeat
 					set theTrackCount to theTrackCount + 1
 					
 					-- log "Analysing track " & (theTrackCount as string)
@@ -130,15 +129,9 @@ script AutoRateController
 							set numAnalysed to numAnalysed + 1
 							
 							set theDateAdded to (date added of theTrack)
-							set playFrequency to playCount / (theNow - theDateAdded)
-							set skipFrequency to skipCount / (theNow - theDateAdded)
-							
 							
 							set combinedCount to playCount - skipCount
-							set combinedFrequency to combinedCount / (theNow - theDateAdded)
-							
-							--for testing purposes
-							--display dialog (theNow - theDateAdded) as text
+							set combinedFrequency to (combinedCount / (theNow - theDateAdded))
 							
 							
 							if usePercentileScaleMethod then
@@ -171,13 +164,13 @@ script AutoRateController
 							set analysisTrackErrors to analysisTrackErrors & theTrackLocation & (ASCII character 10)
 						end if
 						
-						if errStr ‚â† "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
+						if errStr ≠ "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
 						
 					end try
 					
 				end repeat
 				
-				if running then
+				if isRunning then
 					try
 						(*
 						
@@ -188,13 +181,12 @@ script AutoRateController
 						Note that with this change we need to store the min and max values rather than the mean and standard deviations.
 						
 						*)
-						
+						--set the scaleMethod to 2
 						
 						if usePercentileScaleMethod then
 							
 							--display dialog "Using percentile based scaling."
 							-- Calculate percentile method
-							
 							
 							
 							--use the 2.5 and 97.5 percentiles (adjustable)
@@ -228,7 +220,7 @@ script AutoRateController
 							set averageFrequency to sumFrequency / numAnalysed
 							set averageCount to sumCount / numAnalysed
 							
-							-- rearranged sd formula to allow replacing or shifting mean
+							-- Calculate standard deviations, allow replacing or shifting mean
 							set standardDeviationFrequency to ((sumSquaredFrequency - (2 * averageFrequency * sumFrequency) + (numAnalysed * (averageFrequency ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
 							set standardDeviationCount to ((sumSquaredCount - (2 * averageCount * sumCount) + (numAnalysed * (averageCount ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
 							
@@ -262,7 +254,7 @@ script AutoRateController
 			
 			
 			-- Second loop: Assign ratings
-			if running then
+			if isRunning then
 				
 				-- Load playlist
 				if playlistTracks = {} then
@@ -280,18 +272,18 @@ script AutoRateController
 							endProgress()
 							endButton()
 							endLabel()
-							set running to false
+							set isRunning to false
 						end tell
 						return
 					end try
 				end if
 				
 				tell AutoRateController to setMainMessage("Assigning Ratings...")
-				--display dialog ((minFrequency as string) & "/" & (maxFrequency as string) & "/" & (minCount as string) & "/" & (maxCount as string))
+				-- log ((minFrequency as string) & "/" & (maxFrequency as string) & "/" & (minCount as string) & "/" & (maxCount as string))
 				
 				-- log "Entering rating assignment loop"
 				
-				--new parameters in need of GUI access
+				-- TODO: new parameters in need of GUI access
 				(*
 				
 				useHalfStarForItemsWithMoreSkipsThanPlays [boolean] -- will override statistical calculations, see below. Not valid if using whole star only ratings
@@ -308,7 +300,7 @@ script AutoRateController
 				
 				set theTrackCount to 0
 				repeat with theTrack in playlistTracks
-					if not running then exit repeat
+					if not isRunning then exit repeat
 					set theTrackCount to theTrackCount + 1
 					
 					-- log "Rating track " & (theTrackCount as string)
@@ -325,12 +317,10 @@ script AutoRateController
 							
 							set playCount to (played count of theTrack)
 							set skipCount to (skipped count of theTrack) * skipCountFactor --weighted skips relative to plays
-							set theDateAdded to (date added of theTrack)
 							
-							--Combine Play counts and weighted skip counts
+							set theDateAdded to (date added of theTrack)
 							set combinedCount to playCount - skipCount
 							set combinedFrequency to (combinedCount / (theNow - theDateAdded))
-							
 							
 							
 							--Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
@@ -427,7 +417,7 @@ script AutoRateController
 							set rateTrackErrors to rateTrackErrors & theTrackLocation & (ASCII character 10)
 						end if
 						
-						if errStr ‚â† "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
+						if errStr ≠ "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
 						
 					end try
 				end repeat
@@ -435,7 +425,7 @@ script AutoRateController
 		end tell
 		
 		-- log "Finished"
-		if analysisTrackErrors ‚â† "" or rateTrackErrors ‚â† "" then
+		if analysisTrackErrors ≠ "" or rateTrackErrors ≠ "" then
 			tell text view "reportText" of scroll view "reportTextScroll" of window "reportPanel"
 				set contents to (analysisTrackErrors & rateTrackErrors)
 			end tell
@@ -445,7 +435,7 @@ script AutoRateController
 		endProgress()
 		endButton()
 		endLabel()
-		set running to false
+		set isRunning to false
 	end run
 	
 	on getPlaylist()
@@ -458,7 +448,7 @@ script AutoRateController
 	end getPlaylist
 	
 	on abort()
-		set running to false
+		set isRunning to false
 		endingButton()
 	end abort
 	
@@ -527,7 +517,7 @@ script AutoRateController
 	end endLabel
 	
 	on setup()
-		set running to false
+		set isRunning to false
 		
 		tell menu of popup button "playlist" of drawer "drawer" of window "main"
 			tell application "iTunes" to set thePlaylists to user playlists
@@ -544,16 +534,6 @@ script AutoRateController
 		tell user defaults
 			-- Register default entries (won't overwrite existing settings)
 			
-			
-			--Depreciated. The following preferences are no longer used after 1.4.2
-			(*
-			make new default entry at end of default entries with properties {name:"averageFrequency", contents:-1.0}
-			make new default entry at end of default entries with properties {name:"standardDeviationFrequency", contents:-1.0}
-			make new default entry at end of default entries with properties {name:"averagePlayCount", contents:-1.0}
-			make new default entry at end of default entries with properties {name:"standardDeviationPlayCount", contents:-1.0}
-			*)
-			
-			-- Unchanged from 1.4.2
 			make new default entry at end of default entries with properties {name:"lastAnalysisDate", contents:""}
 			make new default entry at end of default entries with properties {name:"wholeStarRatings", contents:false}
 			make new default entry at end of default entries with properties {name:"rateUnratedTracksOnly", contents:false}
@@ -590,24 +570,9 @@ script AutoRateController
 	on loadSettings()
 		tell user defaults
 			-- Read settings
-			(*
-			-- Repair bad prefs (from prior versions. Depreciated after 1.4.2)
-			if contents of default entry "averageFrequency" = "-1.0" then set contents of default entry "averageFrequency" to (-1.0 as number)
-			if contents of default entry "standardDeviationFrequency" = "-1.0" then set contents of default entry "standardDeviationFrequency" to (-1.0 as number)
-			if contents of default entry "averagePlayCount" = "-1.0" then set contents of default entry "averagePlayCount" to (-1.0 as number)
-			if contents of default entry "standardDeviationPlayCount" = "-1.0" then set contents of default entry "standardDeviationPlayCount" to (-1.0 as number)
-			*)
-			-- Depreciated after 1.4.2
-			(*
-			set averageFrequency to contents of default entry "averageFrequency" as number
-			set standardDeviationFrequency to contents of default entry "standardDeviationFrequency" as number
-			set averagePlayCount to contents of default entry "averagePlayCount" as number
-			set standardDeviationPlayCount to contents of default entry "standardDeviationPlayCount" as number
-			*)
 			
-			--Unchanged
 			set lastAnalysisDateStr to contents of default entry "lastAnalysisDate"
-			if lastAnalysisDateStr ‚â† "" then set lastAnalysisDate to lastAnalysisDateStr as date
+			if lastAnalysisDateStr ≠ "" then set lastAnalysisDate to lastAnalysisDateStr as date
 			set wholeStarRatings to contents of default entry "wholeStarRatings" as boolean
 			set rateUnratedTracksOnly to contents of default entry "rateUnratedTracksOnly" as boolean
 			set cacheResults to contents of default entry "cacheResults" as boolean
@@ -640,14 +605,6 @@ script AutoRateController
 	end loadSettings
 	
 	on clearCache()
-		--Depreciated after 1.4.2
-		(*
-		set averageFrequency to -1.0
-		set standardDeviationFrequency to -1.0
-		set averagePlayCount to -1.0
-		set standardDeviationPlayCount to -1.0
-		*)
-		
 		--New after 1.4.2
 		set minFrequency to -1.0
 		set maxFrequency to -1.0
@@ -660,33 +617,12 @@ script AutoRateController
 	
 	on saveCache()
 		tell user defaults
-			--Depreciated after 1.4.2
-			(*
-			set contents of default entry "averageFrequency" to averageFrequency
-			set contents of default entry "standardDeviationFrequency" to standardDeviationFrequency
-			set contents of default entry "averagePlayCount" to averagePlayCount
-			set contents of default entry "standardDeviationPlayCount" to standardDeviationPlayCount
-			*)
 			
 			--New after 1.4.2
 			set contents of default entry "minFrequency" to (minFrequency as number)
 			set contents of default entry "maxFrequency" to (maxFrequency as number)
 			set contents of default entry "minCount" to (minCount as number)
 			set contents of default entry "maxCount" to (maxCount as number)
-			
-			
-			--these don't belong here.
-			(*
-			set contents of default entry "useHalfStarForItemsWithMoreSkipsThanPlays" to (useHalfStarForItemsWithMoreSkipsThanPlays as boolean)
-			set contents of default entry "usePercentileScaleMethod" to (usePercentileScaleMethod as boolean)
-			set contents of default entry "minRating" to (minRating as number)
-			set contents of default entry "maxRating" to (maxRating as number)
-			set contents of default entry "skipCountFactor" to (skipCountFactor as number)
-			set contents of default entry "frequencyMethodOptimismFactor" to (frequencyMethodOptimismFactor as number)
-			set contents of default entry "countMethodOptimismFactor" to (countMethodOptimismFactor as number)
-			set contents of default entry "lowerPercentile" to (lowerPercentile as number)
-			set contents of default entry "theUpperPercentile" to (upperPercentile as number)
-			*)
 			
 			--Unchanged
 			set contents of default entry "lastAnalysisDate" to lastAnalysisDate
@@ -725,8 +661,8 @@ on clicked theObject
 	else if name of theObject is "reportButton" then
 		close panel (window of theObject)
 	else
-		if not running then
-			set running to true
+		if not isRunning then
+			set isRunning to true
 			tell AutoRateController
 				startButton()
 				run
@@ -758,7 +694,4 @@ end awake from nib
 on will open theObject
 	set state of button "showPrefs" of window "main" to on state
 end will open
-
-
-
 
