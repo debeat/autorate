@@ -20,8 +20,6 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
---Just a test
-
 -- Globals
 global isRunning
 global lastAnalysisDate
@@ -546,13 +544,13 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"playlist", contents:"Entire library"}
 			
 			
-			--New preferences after 1.4.2
+			--New preferences v1.5+
 			--Parameters for rating
 			make new default entry at end of default entries with properties {name:"minFrequency", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"maxFrequency", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"minCount", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"maxCount", contents:(-1.0 as number)}
-			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:false}
+			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:true}
 			make new default entry at end of default entries with properties {name:"minRating", contents:(20 as number)}
 			make new default entry at end of default entries with properties {name:"maxRating", contents:(100 as number)}
 			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor", contents:(1.0 as number)}
@@ -582,7 +580,7 @@ script AutoRateController
 			set ratingBias to contents of default entry "ratingBias" as number
 			set ratingMemory to contents of default entry "ratingMemory" as number
 			
-			-- New after 1.4.2
+			-- New v1.5+
 			--Rating
 			set minFrequency to contents of default entry "minFrequency" as number
 			set maxFrequency to contents of default entry "maxFrequency" as number
@@ -607,7 +605,7 @@ script AutoRateController
 	end loadSettings
 	
 	on clearCache()
-		--New after 1.4.2
+		--New v1.5+
 		set minFrequency to -1.0
 		set maxFrequency to -1.0
 		set minCount to -1.0
@@ -620,7 +618,7 @@ script AutoRateController
 	on saveCache()
 		tell user defaults
 			
-			--New after 1.4.2
+			--New v1.5+
 			set contents of default entry "minFrequency" to (minFrequency as number)
 			set contents of default entry "maxFrequency" to (maxFrequency as number)
 			set contents of default entry "minCount" to (minCount as number)
