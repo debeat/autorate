@@ -63,116 +63,117 @@ script AutoRateController
 		updateUI()
 		
 		tell application "iTunes"
-			-- Initialise
-			
-			
-			if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
+			with timeout of (20 * 60) seconds --20 minutes. Even with this at 1 second it produced no errors on my machine.
+				-- Initialise
 				
 				
-				set sumFrequency to 0
-				set sumSquaredFrequency to 0
-				set sumCount to 0
-				set sumSquaredCount to 0
-				set the frequencyList to {}
-				set the countList to {}
-				set the sortedFrequencyList to {}
-				set the sortedCountList to {}
-				
-				try
-					tell AutoRateController to set thePlaylist to getPlaylist()
-					with timeout of (10 * 60) seconds
-						set theTracks to file tracks in library playlist 1
-						set playlistTracks to file tracks in thePlaylist
-					end timeout
-				on error errStr number errNumber
-					display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
-					tell AutoRateController
-						endProgress()
-						endButton()
-						endLabel()
-					end tell
-					set isRunning to false
-					return
-				end try
-				
-				-- log "Obtained " & (length of theTracks as string) & " tracks to analyse"
-				
-				tell AutoRateController
-					setProgressLimit((length of theTracks) + (length of playlistTracks))
-					startProgress()
-					setMainMessage("Analysing...")
-				end tell
-				
-				-- log "Beginning analysis loop"
-				
-				-- First loop: Get track playback statistics
-				set theTrackCount to 0
-				set numAnalysed to 0
-				repeat with theTrack in theTracks
-					if not isRunning then exit repeat
-					set theTrackCount to theTrackCount + 1
+				if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
 					
-					-- log "Analysing track " & (theTrackCount as string)
+					
+					set sumFrequency to 0
+					set sumSquaredFrequency to 0
+					set sumCount to 0
+					set sumSquaredCount to 0
+					set the frequencyList to {}
+					set the countList to {}
+					set the sortedFrequencyList to {}
+					set the sortedCountList to {}
 					
 					try
-						-- log "Track is " & location of theTrack
-						
-						tell AutoRateController
-							setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (length of theTracks))
-							incrementProgress()
-						end tell
-						
-						set playCount to (played count of theTrack)
-						set skipCount to (skipped count of theTrack) * skipCountFactor
-						
-						if (playCount > skipCount) then
-							set numAnalysed to numAnalysed + 1
-							
-							set theDateAdded to (date added of theTrack)
-							
-							set combinedCount to playCount - skipCount
-							set combinedFrequency to (combinedCount / (theNow - theDateAdded))
-							
-							
-							if usePercentileScaleMethod then
-								copy (combinedCount as string) to the end of the countList
-								copy (combinedFrequency as string) to the end of the frequencyList
-							else
-								set sumFrequency to sumFrequency + combinedFrequency
-								set sumSquaredFrequency to sumSquaredFrequency + (combinedFrequency ^ 2)
-								set sumCount to sumCount + combinedCount
-								set sumSquaredCount to sumSquaredCount + (combinedCount ^ 2)
-							end if
-						end if
-						-- log "Frequency is " & (frequency as string)
-						
+						tell AutoRateController to set thePlaylist to getPlaylist()
+						with timeout of (10 * 60) seconds
+							set theTracks to file tracks in library playlist 1
+							set playlistTracks to file tracks in thePlaylist
+						end timeout
 					on error errStr number errNumber
-						
-						-- log "error " & errStr & ", number " & (errNumber as string)
-						
-						set theTrackLocation to ""
-						
-						try
-							set theTrackLocation to location of theTrack
-						on error
-							-- Noop
-						end try
-						
-						if theTrackLocation = "" then
-							set analysisTrackErrors to analysisTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
-						else
-							set analysisTrackErrors to analysisTrackErrors & theTrackLocation & (ASCII character 10)
-						end if
-						
-						if errStr is not "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
-						
+						display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
+						tell AutoRateController
+							endProgress()
+							endButton()
+							endLabel()
+						end tell
+						set isRunning to false
+						return
 					end try
 					
-				end repeat
-				
-				if isRunning then
-					try
-						(*
+					-- log "Obtained " & (length of theTracks as string) & " tracks to analyse"
+					
+					tell AutoRateController
+						setProgressLimit((length of theTracks) + (length of playlistTracks))
+						startProgress()
+						setMainMessage("Analysing...")
+					end tell
+					
+					-- log "Beginning analysis loop"
+					
+					-- First loop: Get track playback statistics
+					set theTrackCount to 0
+					set numAnalysed to 0
+					repeat with theTrack in theTracks
+						if not isRunning then exit repeat
+						set theTrackCount to theTrackCount + 1
+						
+						-- log "Analysing track " & (theTrackCount as string)
+						
+						try
+							-- log "Track is " & location of theTrack
+							
+							tell AutoRateController
+								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (length of theTracks))
+								incrementProgress()
+							end tell
+							
+							set playCount to (played count of theTrack)
+							set skipCount to (skipped count of theTrack) * skipCountFactor
+							
+							if (playCount > skipCount) then
+								set numAnalysed to numAnalysed + 1
+								
+								set theDateAdded to (date added of theTrack)
+								
+								set combinedCount to playCount - skipCount
+								set combinedFrequency to (combinedCount / (theNow - theDateAdded))
+								
+								
+								if usePercentileScaleMethod then
+									copy (combinedCount as string) to the end of the countList
+									copy (combinedFrequency as string) to the end of the frequencyList
+								else
+									set sumFrequency to sumFrequency + combinedFrequency
+									set sumSquaredFrequency to sumSquaredFrequency + (combinedFrequency ^ 2)
+									set sumCount to sumCount + combinedCount
+									set sumSquaredCount to sumSquaredCount + (combinedCount ^ 2)
+								end if
+							end if
+							-- log "Frequency is " & (frequency as string)
+							
+						on error errStr number errNumber
+							
+							-- log "error " & errStr & ", number " & (errNumber as string)
+							
+							set theTrackLocation to ""
+							
+							try
+								set theTrackLocation to location of theTrack
+							on error
+								-- Noop
+							end try
+							
+							if theTrackLocation = "" then
+								set analysisTrackErrors to analysisTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
+							else
+								set analysisTrackErrors to analysisTrackErrors & theTrackLocation & (ASCII character 10)
+							end if
+							
+							if errStr is not "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
+							
+						end try
+						
+					end repeat
+					
+					if isRunning then
+						try
+							(*
 						
 						Option to calculation statistics in 2 ways
 							Method 1. the mean +/- 2 standard deviations (95% of a normal distribution)
@@ -181,110 +182,110 @@ script AutoRateController
 						Note that with this change we need to store the min and max values rather than the mean and standard deviations.
 						
 						*)
-						--set the scaleMethod to 2
-						
-						if usePercentileScaleMethod then
+							--set the scaleMethod to 2
 							
-							--display dialog "Using percentile based scaling."
-							-- Calculate percentile method
+							if usePercentileScaleMethod then
+								
+								--display dialog "Using percentile based scaling."
+								-- Calculate percentile method
+								
+								
+								--use the 2.5 and 97.5 percentiles (adjustable)
+								--set theLowerPercentile to 0.025
+								--set theUpperPercentile to 0.975
+								
+								--sort the lists so we can find the item at lower and upper percentiles
+								set the sortedFrequencyList to my unix_sort(the frequencyList)
+								set the sortedCountList to my unix_sort(the countList)
+								
+								
+								--Prevent index out of bounds errors
+								set minIndex to (numAnalysed * lowerPercentile) as integer
+								if minIndex < 1 then set minIndex to 1
+								-- Ditto
+								set maxIndex to (numAnalysed * upperPercentile) as integer
+								if maxIndex > numAnalysed then set maxIndex to numAnalysed
+								
+								--Setting the lower and upper percentile values as the min and max
+								set minFrequency to (item minIndex of the sortedFrequencyList as real)
+								if minFrequency < 0 then set minFrequency to 0
+								set maxFrequency to (item maxIndex of the sortedFrequencyList as real)
+								
+								set minCount to (item minIndex of the sortedCountList as real)
+								if minCount < 0 then set minCount to 0
+								set maxCount to (item maxIndex of the sortedCountList as real)
+								
+							else
+								--display dialog "Using normal distribution based scaling."
+								-- Calculate normal distribution method
+								set averageFrequency to sumFrequency / numAnalysed
+								set averageCount to sumCount / numAnalysed
+								
+								-- Calculate standard deviations, allow replacing or shifting mean
+								set standardDeviationFrequency to ((sumSquaredFrequency - (2 * averageFrequency * sumFrequency) + (numAnalysed * (averageFrequency ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
+								set standardDeviationCount to ((sumSquaredCount - (2 * averageCount * sumCount) + (numAnalysed * (averageCount ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
+								
+								-- Set min and max to be 2*sd from the mean
+								set minFrequency to averageFrequency - (2 * standardDeviationFrequency)
+								set maxFrequency to averageFrequency + (2 * standardDeviationFrequency)
+								if minFrequency < 0 then set minFrequency to 0
+								set minCount to averageCount - (2 * standardDeviationCount)
+								set maxCount to averageCount + (2 * standardDeviationCount)
+								if minCount < 0 then set minCount to 0
+								
+							end if
 							
 							
-							--use the 2.5 and 97.5 percentiles (adjustable)
-							--set theLowerPercentile to 0.025
-							--set theUpperPercentile to 0.975
+							-- Remember when we last analysed
+							set lastAnalysisDate to theNow
 							
-							--sort the lists so we can find the item at lower and upper percentiles
-							set the sortedFrequencyList to my unix_sort(the frequencyList)
-							set the sortedCountList to my unix_sort(the countList)
+							-- Save to defaults
+							tell AutoRateController to saveCache()
 							
+						on error errorStr number errNumber
+							-- log "error " & errStr & ", number " & (errNumber as string)
 							
-							--Prevent index out of bounds errors
-							set minIndex to (numAnalysed * lowerPercentile) as integer
-							if minIndex < 1 then set minIndex to 1
-							-- Ditto
-							set maxIndex to (numAnalysed * upperPercentile) as integer
-							if maxIndex > numAnalysed then set maxIndex to numAnalysed
+							display dialog "Encountered error while processing statistics (error " & (errNumber as string) & "): " & errorStr & ". Please notify the developer."
+							return
 							
-							--Setting the lower and upper percentile values as the min and max
-							set minFrequency to (item minIndex of the sortedFrequencyList as real)
-							if minFrequency < 0 then set minFrequency to 0
-							set maxFrequency to (item maxIndex of the sortedFrequencyList as real)
-							
-							set minCount to (item minIndex of the sortedCountList as real)
-							if minCount < 0 then set minCount to 0
-							set maxCount to (item maxIndex of the sortedCountList as real)
-							
-						else
-							--display dialog "Using normal distribution based scaling."
-							-- Calculate normal distribution method
-							set averageFrequency to sumFrequency / numAnalysed
-							set averageCount to sumCount / numAnalysed
-							
-							-- Calculate standard deviations, allow replacing or shifting mean
-							set standardDeviationFrequency to ((sumSquaredFrequency - (2 * averageFrequency * sumFrequency) + (numAnalysed * (averageFrequency ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
-							set standardDeviationCount to ((sumSquaredCount - (2 * averageCount * sumCount) + (numAnalysed * (averageCount ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
-							
-							-- Set min and max to be 2*sd from the mean
-							set minFrequency to averageFrequency - (2 * standardDeviationFrequency)
-							set maxFrequency to averageFrequency + (2 * standardDeviationFrequency)
-							if minFrequency < 0 then set minFrequency to 0
-							set minCount to averageCount - (2 * standardDeviationCount)
-							set maxCount to averageCount + (2 * standardDeviationCount)
-							if minCount < 0 then set minCount to 0
-							
-						end if
-						
-						
-						-- Remember when we last analysed
-						set lastAnalysisDate to theNow
-						
-						-- Save to defaults
-						tell AutoRateController to saveCache()
-						
-					on error errorStr number errNumber
-						-- log "error " & errStr & ", number " & (errNumber as string)
-						
-						display dialog "Encountered error while processing statistics (error " & (errNumber as string) & "): " & errorStr & ". Please notify the developer."
-						return
-						
-					end try
+						end try
+					end if
 				end if
-			end if
-			-- log "Left analysis loop"
-			
-			
-			-- Second loop: Assign ratings
-			if isRunning then
+				-- log "Left analysis loop"
 				
-				-- Load playlist
-				if playlistTracks = {} then
-					try
-						tell AutoRateController to set thePlaylist to getPlaylist()
-						set playlistTracks to file tracks in thePlaylist
-						tell AutoRateController
-							setProgressLimit(length of playlistTracks)
-							startProgress()
-						end tell
-					on error errStr number errNumber
-						-- log "error " & errStr & ", number " & (errNumber as string)
-						display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
-						tell AutoRateController
-							endProgress()
-							endButton()
-							endLabel()
-							set isRunning to false
-						end tell
-						return
-					end try
-				end if
 				
-				tell AutoRateController to setMainMessage("Assigning Ratings...")
-				-- log ((minFrequency as string) & "/" & (maxFrequency as string) & "/" & (minCount as string) & "/" & (maxCount as string))
-				
-				-- log "Entering rating assignment loop"
-				
-				-- TODO: new parameters in need of GUI access
-				(*
+				-- Second loop: Assign ratings
+				if isRunning then
+					
+					-- Load playlist
+					if playlistTracks = {} then
+						try
+							tell AutoRateController to set thePlaylist to getPlaylist()
+							set playlistTracks to file tracks in thePlaylist
+							tell AutoRateController
+								setProgressLimit(length of playlistTracks)
+								startProgress()
+							end tell
+						on error errStr number errNumber
+							-- log "error " & errStr & ", number " & (errNumber as string)
+							display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
+							tell AutoRateController
+								endProgress()
+								endButton()
+								endLabel()
+								set isRunning to false
+							end tell
+							return
+						end try
+					end if
+					
+					tell AutoRateController to setMainMessage("Assigning Ratings...")
+					-- log ((minFrequency as string) & "/" & (maxFrequency as string) & "/" & (minCount as string) & "/" & (maxCount as string))
+					
+					-- log "Entering rating assignment loop"
+					
+					-- TODO: new parameters in need of GUI access
+					(*
 				
 				useHalfStarForItemsWithMoreSkipsThanPlays [boolean] -- will override statistical calculations, see below. Not valid if using whole star only ratings
 				minRating [integer] -- ie 20 = 1 star. Note that tracks that have never been played OR skipped always get a rating of zero.
@@ -293,135 +294,136 @@ script AutoRateController
 				frequencyMethodOptimismFactor
 				countMethodOptimismFactor				
 				*)
-				-- end of new parameters
-				
-				--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
-				if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 as integer -- ie 1 star
-				
-				set theTrackCount to 0
-				repeat with theTrack in playlistTracks
-					if not isRunning then exit repeat
-					set theTrackCount to theTrackCount + 1
+					-- end of new parameters
 					
-					-- log "Rating track " & (theTrackCount as string)
+					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
+					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 as integer -- ie 1 star
 					
-					try
+					set theTrackCount to 0
+					repeat with theTrack in playlistTracks
+						if not isRunning then exit repeat
+						set theTrackCount to theTrackCount + 1
 						
-						tell AutoRateController
-							incrementProgress()
-							setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & length of playlistTracks)
-						end tell
+						-- log "Rating track " & (theTrackCount as string)
 						
-						if not rateUnratedTracksOnly or rating of theTrack is 0 then
-							-- log "Track is " & location of theTrack
+						try
 							
-							set playCount to (played count of theTrack)
-							set skipCount to (skipped count of theTrack) * skipCountFactor --weighted skips relative to plays
+							tell AutoRateController
+								incrementProgress()
+								setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & length of playlistTracks)
+							end tell
 							
-							set theDateAdded to (date added of theTrack)
-							set combinedCount to playCount - skipCount
-							set combinedFrequency to (combinedCount / (theNow - theDateAdded))
-							
-							
-							--Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
-							--	I am aware that this means skipped songs are rated higher than unplayed songs, which may be
-							--	counter-intuative, but lends itself to more meaningful ratings IMHO.
-							if playCount = 0 and skipCount = 0 then
-								set theRating to 0
-								--Override calculated rating if the weighted skip count is greater than the play count and ignores rating memory
-							else if useHalfStarForItemsWithMoreSkipsThanPlays and (playCount < skipCount) then
-								set theRating to 10
-							else
-								-- Calculate frequency-based rating on a scale of 0 to (maxRating - minRating)
-								--================================================================
-								set frequencyMethodRating to ((maxRating - minRating) * ((combinedFrequency - minFrequency) / (maxFrequency - minFrequency)))
+							if not rateUnratedTracksOnly or rating of theTrack is 0 then
+								-- log "Track is " & location of theTrack
 								
-								-- Scale the rating above minRating by frequncyMethodOptimismFactor and round to integer
-								set frequencyMethodRating to (frequencyMethodRating * frequencyMethodOptimismFactor) as integer
+								set playCount to (played count of theTrack)
+								set skipCount to (skipped count of theTrack) * skipCountFactor --weighted skips relative to plays
 								
-								--Check for lower outlier
-								if frequencyMethodRating < 0 then set frequencyMethodRating to 0
-								
-								-- Shift the rating up to the range (minRating --> maxRating)
-								set frequencyMethodRating to frequencyMethodRating + minRating
-								
-								-- check for upper outlier
-								if frequencyMethodRating > maxRating then set frequencyMethodRating to maxRating
-								--================================================================
-								-- End of Frequency-based rating
+								set theDateAdded to (date added of theTrack)
+								set combinedCount to playCount - skipCount
+								set combinedFrequency to (combinedCount / (theNow - theDateAdded))
 								
 								
-								-- Calculate count-based rating on a scale of 0 to (maxRating - minRating)
-								--================================================================								
-								set countMethodRating to ((maxRating - minRating) * ((combinedCount - minCount) / (maxCount - minCount)))
+								--Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
+								--	I am aware that this means skipped songs are rated higher than unplayed songs, which may be
+								--	counter-intuative, but lends itself to more meaningful ratings IMHO.
+								if playCount = 0 and skipCount = 0 then
+									set theRating to 0
+									--Override calculated rating if the weighted skip count is greater than the play count and ignores rating memory
+								else if useHalfStarForItemsWithMoreSkipsThanPlays and (playCount < skipCount) then
+									set theRating to 10
+								else
+									-- Calculate frequency-based rating on a scale of 0 to (maxRating - minRating)
+									--================================================================
+									set frequencyMethodRating to ((maxRating - minRating) * ((combinedFrequency - minFrequency) / (maxFrequency - minFrequency)))
+									
+									-- Scale the rating above minRating by frequncyMethodOptimismFactor and round to integer
+									set frequencyMethodRating to (frequencyMethodRating * frequencyMethodOptimismFactor) as integer
+									
+									--Check for lower outlier
+									if frequencyMethodRating < 0 then set frequencyMethodRating to 0
+									
+									-- Shift the rating up to the range (minRating --> maxRating)
+									set frequencyMethodRating to frequencyMethodRating + minRating
+									
+									-- check for upper outlier
+									if frequencyMethodRating > maxRating then set frequencyMethodRating to maxRating
+									--================================================================
+									-- End of Frequency-based rating
+									
+									
+									-- Calculate count-based rating on a scale of 0 to (maxRating - minRating)
+									--================================================================								
+									set countMethodRating to ((maxRating - minRating) * ((combinedCount - minCount) / (maxCount - minCount)))
+									
+									-- Scale the rating above theMinRating by countMethodOptimismFactor and round to integer
+									set countMethodRating to (countMethodRating * countMethodOptimismFactor) as integer
+									
+									--Check for lower outlier
+									if countMethodRating < 0 then set countMethodRating to 0
+									
+									-- Shift the rating up to the range (theMinRating --> theMaxRating)
+									set countMethodRating to countMethodRating + minRating
+									
+									-- check for upper outlier
+									if countMethodRating > maxRating then set countMethodRating to maxRating
+									--================================================================
+									-- End of Count-based rating
+									
+									
+									-- Combine ratings according to user preferences
+									--================================================================
+									set theRating to (frequencyMethodRating * (1.0 - ratingBias)) + (countMethodRating * ratingBias)
+									
+									-- Factor in previous rating memory
+									set theRating to ((rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
+									--================================================================
+									
+									
+								end if
 								
-								-- Scale the rating above theMinRating by countMethodOptimismFactor and round to integer
-								set countMethodRating to (countMethodRating * countMethodOptimismFactor) as integer
-								
-								--Check for lower outlier
-								if countMethodRating < 0 then set countMethodRating to 0
-								
-								-- Shift the rating up to the range (theMinRating --> theMaxRating)
-								set countMethodRating to countMethodRating + minRating
-								
-								-- check for upper outlier
-								if countMethodRating > maxRating then set countMethodRating to maxRating
-								--================================================================
-								-- End of Count-based rating
 								
 								
-								-- Combine ratings according to user preferences
-								--================================================================
-								set theRating to (frequencyMethodRating * (1.0 - ratingBias)) + (countMethodRating * ratingBias)
-								
-								-- Factor in previous rating memory
-								set theRating to ((rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
-								--================================================================
-								
-								
-							end if
-							
-							
-							
-							-- Round to whole stars if requested to
-							if wholeStarRatings then
-								set theRating to (theRating / 20 as integer) * 20
-							else
-								(*
+								-- Round to whole stars if requested to
+								if wholeStarRatings then
+									set theRating to (theRating / 20 as integer) * 20
+								else
+									(*
 							Otherwise round to half stars. Previously ratings were not rounded to nearest 10,
 								which worked in itunes but I don't know if itunes would round the value internally or just drop down.
 								Also third party utilities might get confused by values like "24" when they expect "20".
 								I know GimmeSomeTunes does. This should fix that and have no negative consequences.
 							*)
-								set theRating to (theRating / 10 as integer) * 10
+									set theRating to (theRating / 10 as integer) * 10
+								end if
+								
+								
+								-- Save to track
+								set rating of theTrack to theRating
+							end if
+						on error errStr number errNumber
+							-- log "error " & errStr & ", number " & (errNumber as string)
+							
+							set theTrackLocation to ""
+							
+							try
+								set theTrackLocation to location of theTrack
+							on error
+								-- Noop
+							end try
+							
+							if theTrackLocation = "" then
+								set rateTrackErrors to rateTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
+							else
+								set rateTrackErrors to rateTrackErrors & theTrackLocation & (ASCII character 10)
 							end if
 							
+							if errStr is not "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
 							
-							-- Save to track
-							set rating of theTrack to theRating
-						end if
-					on error errStr number errNumber
-						-- log "error " & errStr & ", number " & (errNumber as string)
-						
-						set theTrackLocation to ""
-						
-						try
-							set theTrackLocation to location of theTrack
-						on error
-							-- Noop
 						end try
-						
-						if theTrackLocation = "" then
-							set rateTrackErrors to rateTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
-						else
-							set rateTrackErrors to rateTrackErrors & theTrackLocation & (ASCII character 10)
-						end if
-						
-						if errStr is not "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
-						
-					end try
-				end repeat
-			end if
+					end repeat
+				end if
+			end timeout
 		end tell
 		
 		-- log "Finished"
