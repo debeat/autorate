@@ -45,6 +45,7 @@ global lowerPercentile
 global upperPercentile
 global usePercentileScaleMethod
 global logStats
+global analysisGroupNames
 
 
 -- Main controller
@@ -56,7 +57,7 @@ script AutoRateController
 		set theNow to current date
 		set analysisTrackErrors to ""
 		set rateTrackErrors to ""
-		set playlistTracks to {}
+		set tracksToRateList to {}
 		
 		setMainMessage("Loading playlist tracks...")
 		startIndeterminateProgress()
@@ -74,16 +75,16 @@ script AutoRateController
 					set sumSquaredFrequency to 0
 					set sumCount to 0
 					set sumSquaredCount to 0
-					set the frequencyList to {}
-					set the countList to {}
-					set the sortedFrequencyList to {}
-					set the sortedCountList to {}
+					set frequencyList to {}
+					set countList to {}
+					set sortedFrequencyList to {}
+					set sortedCountList to {}
 					
 					try
 						tell AutoRateController to set thePlaylist to getPlaylist()
 						with timeout of (10 * 60) seconds
-							set theTracks to file tracks in library playlist 1
-							set playlistTracks to file tracks in thePlaylist
+							set tracksToAnalyseList to file tracks in library playlist 1
+							set tracksToRateList to file tracks in thePlaylist
 						end timeout
 					on error errStr number errNumber
 						display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
@@ -96,12 +97,12 @@ script AutoRateController
 						return
 					end try
 					
-					-- log "Obtained " & (length of theTracks as string) & " tracks to analyse"
+					-- log "Obtained " & (length of tracksToAnalyseList as string) & " tracks to analyse"
 					
 					tell AutoRateController
-						setProgressLimit((length of theTracks) + (length of playlistTracks))
+						setProgressLimit((length of tracksToAnalyseList) + (length of tracksToRateList))
 						startProgress()
-						setMainMessage("Analysing...")
+						setMainMessage("Analysing your iTunes Library...")
 					end tell
 					
 					-- log "Beginning analysis loop"
@@ -109,7 +110,7 @@ script AutoRateController
 					-- First loop: Get track playback statistics
 					set theTrackCount to 0
 					set numAnalysed to 0
-					repeat with theTrack in theTracks
+					repeat with theTrack in tracksToAnalyseList
 						if not isRunning then exit repeat
 						set theTrackCount to theTrackCount + 1
 						
@@ -119,7 +120,7 @@ script AutoRateController
 							-- log "Track is " & location of theTrack
 							
 							tell AutoRateController
-								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (length of theTracks))
+								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (length of tracksToAnalyseList))
 								incrementProgress()
 							end tell
 							
@@ -160,9 +161,9 @@ script AutoRateController
 							end try
 							
 							if theTrackLocation = "" then
-								set analysisTrackErrors to analysisTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
+								set analysisTrackErrors to analysisTrackErrors & "(Track " & (theTrackCount as string) & ")" & {ASCII character 10}
 							else
-								set analysisTrackErrors to analysisTrackErrors & theTrackLocation & (ASCII character 10)
+								set analysisTrackErrors to analysisTrackErrors & theTrackLocation & {ASCII character 10}
 							end if
 							
 							if errStr is not "" then set analysisTrackErrors to analysisTrackErrors & ": " & errStr
@@ -258,12 +259,12 @@ script AutoRateController
 				if isRunning then
 					
 					-- Load playlist
-					if playlistTracks = {} then
+					if tracksToRateList = {} then
 						try
 							tell AutoRateController to set thePlaylist to getPlaylist()
-							set playlistTracks to file tracks in thePlaylist
+							set tracksToRateList to file tracks in thePlaylist
 							tell AutoRateController
-								setProgressLimit(length of playlistTracks)
+								setProgressLimit(length of tracksToRateList)
 								startProgress()
 							end tell
 						on error errStr number errNumber
@@ -300,7 +301,7 @@ script AutoRateController
 					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 as integer -- ie 1 star
 					
 					set theTrackCount to 0
-					repeat with theTrack in playlistTracks
+					repeat with theTrack in tracksToRateList
 						if not isRunning then exit repeat
 						set theTrackCount to theTrackCount + 1
 						
@@ -310,7 +311,7 @@ script AutoRateController
 							
 							tell AutoRateController
 								incrementProgress()
-								setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & length of playlistTracks)
+								setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & length of tracksToRateList)
 							end tell
 							
 							if not rateUnratedTracksOnly or rating of theTrack is 0 then
@@ -413,9 +414,9 @@ script AutoRateController
 							end try
 							
 							if theTrackLocation = "" then
-								set rateTrackErrors to rateTrackErrors & "(Track " & (theTrackCount as string) & ")" & (ASCII character 10)
+								set rateTrackErrors to rateTrackErrors & "(Track " & (theTrackCount as string) & ")" & {ASCII character 10}
 							else
-								set rateTrackErrors to rateTrackErrors & theTrackLocation & (ASCII character 10)
+								set rateTrackErrors to rateTrackErrors & theTrackLocation & {ASCII character 10}
 							end if
 							
 							if errStr is not "" then set rateTrackErrors to rateTrackErrors & ": " & errStr
@@ -514,7 +515,7 @@ script AutoRateController
 	end endButton
 	
 	on endLabel()
-		setMainMessage("Finished")
+		setMainMessage("Finished.")
 		setSecondaryMessage("")
 	end endLabel
 	
