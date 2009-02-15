@@ -54,6 +54,13 @@ script AutoRateController
 		-- log "Beginning rate procedure"
 		
 		loadSettings()
+		
+		--Temporary preferences settings for development purposes
+		
+		
+		
+		
+		
 		set theNow to current date
 		set analysisTrackErrors to ""
 		set rateTrackErrors to ""
@@ -64,7 +71,7 @@ script AutoRateController
 		updateUI()
 		
 		tell application "iTunes"
-			with timeout of (20 * 60) seconds --20 minutes. Even with this at 1 second it produced no errors on my machine.
+			with timeout of (20 * 60) seconds --20 minutes. Even with this at 1 second it produced no errors on my machine. I don't know why people are getting timeout errors
 				-- Initialise
 				
 				
@@ -196,16 +203,18 @@ script AutoRateController
 								--set theUpperPercentile to 0.975
 								
 								--sort the lists so we can find the item at lower and upper percentiles
-								set the sortedFrequencyList to my unix_sort(the frequencyList)
-								set the sortedCountList to my unix_sort(the countList)
+								set the sortedFrequencyList to my unixSort(the frequencyList)
+								set the sortedCountList to my unixSort(the countList)
 								
 								
 								--Prevent index out of bounds errors
-								set minIndex to (numAnalysed * lowerPercentile) as integer
+								set minIndex to ((the length of the sortedCountList) * lowerPercentile) as integer
 								if minIndex < 1 then set minIndex to 1
 								-- Ditto
-								set maxIndex to (numAnalysed * upperPercentile) as integer
-								if maxIndex > numAnalysed then set maxIndex to numAnalysed
+								set maxIndex to ((the length of the sortedCountList) * upperPercentile) as integer
+								if maxIndex > the length of the sortedCountList then set maxIndex to the length of the sortedCountList
+								--just in case the length of the count and frequency lists are different, which they shouldn't be...
+								if maxIndex > the length of the sortedFrequencyList then set maxIndex to the length of the sortedFrequencyList
 								
 								--Setting the lower and upper percentile values as the min and max
 								set minFrequency to (item minIndex of the sortedFrequencyList as real)
@@ -325,9 +334,12 @@ script AutoRateController
 								set combinedFrequency to (combinedCount / (theNow - theDateAdded))
 								
 								
-								--Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
-								--	I am aware that this means skipped songs are rated higher than unplayed songs, which may be
-								--	counter-intuative, but lends itself to more meaningful ratings IMHO.
+								(*
+								Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
+								I am aware that this means skipped songs are rated higher than unplayed songs, which may be
+								counter-intuative, but lends itself to more meaningful ratings IMHO. Most people consider a rating 
+								of no stars to mean "unrated" rather to mean a rating of zero.
+								*)
 								if playCount = 0 and skipCount = 0 then
 									set theRating to 0
 									--Override calculated rating if the weighted skip count is greater than the play count and ignores rating memory
@@ -390,11 +402,11 @@ script AutoRateController
 									set theRating to (theRating / 20 as integer) * 20
 								else
 									(*
-							Otherwise round to half stars. Previously ratings were not rounded to nearest 10,
-								which worked in itunes but I don't know if itunes would round the value internally or just drop down.
-								Also third party utilities might get confused by values like "24" when they expect "20".
-								I know GimmeSomeTunes does. This should fix that and have no negative consequences.
-							*)
+									Otherwise round to half stars. Previously ratings were not rounded to nearest 10,
+										which worked in itunes but I don't know if itunes would round the value internally or just drop down.
+										Also third party utilities might get confused by values like "24" when they expect "20".
+										I know GimmeSomeTunes does. This should fix that and have no negative consequences.
+									*)
 									set theRating to (theRating / 10 as integer) * 10
 								end if
 								
@@ -579,28 +591,28 @@ script AutoRateController
 			set wholeStarRatings to contents of default entry "wholeStarRatings" as boolean
 			set rateUnratedTracksOnly to contents of default entry "rateUnratedTracksOnly" as boolean
 			set cacheResults to contents of default entry "cacheResults" as boolean
-			set cacheTime to contents of default entry "cacheTime" as number
-			set ratingBias to contents of default entry "ratingBias" as number
-			set ratingMemory to contents of default entry "ratingMemory" as number
+			set cacheTime to contents of default entry "cacheTime" as integer
+			set ratingBias to contents of default entry "ratingBias" as real
+			set ratingMemory to contents of default entry "ratingMemory" as real
 			
 			-- New v1.5+
 			--Rating
-			set minFrequency to contents of default entry "minFrequency" as number
-			set maxFrequency to contents of default entry "maxFrequency" as number
-			set minCount to contents of default entry "minCount" as number
-			set maxCount to contents of default entry "maxCount" as number
+			set minFrequency to contents of default entry "minFrequency" as real
+			set maxFrequency to contents of default entry "maxFrequency" as real
+			set minCount to contents of default entry "minCount" as integer
+			set maxCount to contents of default entry "maxCount" as integer
 			set useHalfStarForItemsWithMoreSkipsThanPlays to contents of default entry "useHalfStarForItemsWithMoreSkipsThanPlays" as boolean
-			set minRating to contents of default entry "minRating" as number
-			set maxRating to contents of default entry "maxRating" as number
-			set frequencyMethodOptimismFactor to contents of default entry "frequencyMethodOptimismFactor" as number
-			set countMethodOptimismFactor to contents of default entry "countMethodOptimismFactor" as number
+			set minRating to contents of default entry "minRating" as integer
+			set maxRating to contents of default entry "maxRating" as integer
+			set frequencyMethodOptimismFactor to contents of default entry "frequencyMethodOptimismFactor" as real
+			set countMethodOptimismFactor to contents of default entry "countMethodOptimismFactor" as real
 			--Analysis
 			set usePercentileScaleMethod to contents of default entry "usePercentileScaleMethod" as boolean
-			set lowerPercentile to contents of default entry "lowerPercentile" as number
-			set upperPercentile to contents of default entry "upperPercentile" as number
+			set lowerPercentile to contents of default entry "lowerPercentile" as real
+			set upperPercentile to contents of default entry "upperPercentile" as real
 			set logStats to contents of default entry "logStats" as boolean
 			--Both
-			set skipCountFactor to contents of default entry "skipCountFactor" as number
+			set skipCountFactor to contents of default entry "skipCountFactor" as real
 			
 			
 			
@@ -633,7 +645,7 @@ script AutoRateController
 	end saveCache
 	
 	--Sorting subroutine added by Brandon. Used for percentile calculations
-	on unix_sort(the_list)
+	on unixSort(unsortedList)
 		(*
 		Though sorting could be done natively (albeit manually) in applescript, this runs about 50,000 times faster.
 			I tried it using Apple's sort sub routine @ 
@@ -645,16 +657,16 @@ script AutoRateController
 		*)
 		set old_delims to AppleScript's text item delimiters
 		set AppleScript's text item delimiters to {ASCII character 10} -- always a linefeed
-		set list_string to (the_list as string)
-		set new_string to do shell script "echo " & quoted form of list_string & " | sort -fg"
+		set the unsortedListString to (the unsortedList as string)
+		set the sortedListString to do shell script "echo " & quoted form of unsortedListString & " | sort -fg"
 		
 		--The following will dump out the sorted list to a txt file 
-		if logStats then do shell script "echo List " & new_string & " >> lists.txt"
+		if logStats then do shell script "echo List " & sortedListString & " >> lists.txt"
 		
-		set new_list to (paragraphs of new_string)
+		set the sortedList to (paragraphs of the sortedListString)
 		set AppleScript's text item delimiters to old_delims
-		return new_list
-	end unix_sort
+		return sortedList
+	end unixSort
 	
 end script
 
