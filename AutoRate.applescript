@@ -55,12 +55,6 @@ script AutoRateController
 		
 		loadSettings()
 		
-		--Temporary preferences settings for development purposes
-		
-		
-		
-		
-		
 		set theNow to current date
 		set analysisTrackErrors to ""
 		set rateTrackErrors to ""
@@ -72,12 +66,10 @@ script AutoRateController
 		
 		tell application "iTunes"
 			with timeout of (20 * 60) seconds --20 minutes. Even with this at 1 second it produced no errors on my machine. I don't know why people are getting timeout errors
-				-- Initialise
-				
-				
+				--Decide whether to run a statistical analysis
 				if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
 					
-					
+					-- Initialise statistical analysis temp values
 					set sumFrequency to 0
 					set sumSquaredFrequency to 0
 					set sumCount to 0
@@ -294,16 +286,14 @@ script AutoRateController
 					
 					-- log "Entering rating assignment loop"
 					
-					-- TODO: new parameters in need of GUI access
 					(*
-				
-				useHalfStarForItemsWithMoreSkipsThanPlays [boolean] -- will override statistical calculations, see below. Not valid if using whole star only ratings
-				minRating [integer] -- ie 20 = 1 star. Note that tracks that have never been played OR skipped always get a rating of zero.
-				maxRating [integer] -- ie 100= 5 star
-				skipCountFactor [integer] -- are skips considered more important than plays? 
-				frequencyMethodOptimismFactor
-				countMethodOptimismFactor				
-				*)
+						useHalfStarForItemsWithMoreSkipsThanPlays [boolean] -- will override statistical calculations, see below. Not valid if using whole star only ratings
+						minRating [integer] -- ie 20 = 1 star. Note that tracks that have never been played OR skipped always get a rating of zero.
+						maxRating [integer] -- ie 100= 5 star
+						skipCountFactor [integer] -- are skips considered more important than plays? 
+						frequencyMethodOptimismFactor
+						countMethodOptimismFactor				
+					*)
 					-- end of new parameters
 					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
@@ -409,7 +399,6 @@ script AutoRateController
 									*)
 									set theRating to (theRating / 10 as integer) * 10
 								end if
-								
 								
 								-- Save to track
 								set rating of theTrack to theRating
@@ -548,7 +537,6 @@ script AutoRateController
 	on initSettings()
 		tell user defaults
 			-- Register default entries (won't overwrite existing settings)
-			
 			make new default entry at end of default entries with properties {name:"lastAnalysisDate", contents:""}
 			make new default entry at end of default entries with properties {name:"wholeStarRatings", contents:false}
 			make new default entry at end of default entries with properties {name:"rateUnratedTracksOnly", contents:false}
@@ -557,8 +545,6 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"ratingBias", contents:0.5}
 			make new default entry at end of default entries with properties {name:"ratingMemory", contents:0}
 			make new default entry at end of default entries with properties {name:"playlist", contents:"Entire library"}
-			
-			
 			--New preferences v1.5+
 			--Parameters for rating
 			make new default entry at end of default entries with properties {name:"minFrequency", contents:(-1.0 as number)}
@@ -594,7 +580,6 @@ script AutoRateController
 			set cacheTime to contents of default entry "cacheTime" as integer
 			set ratingBias to contents of default entry "ratingBias" as real
 			set ratingMemory to contents of default entry "ratingMemory" as real
-			
 			-- New v1.5+
 			--Rating
 			set minFrequency to contents of default entry "minFrequency" as real
@@ -613,8 +598,6 @@ script AutoRateController
 			set logStats to contents of default entry "logStats" as boolean
 			--Both
 			set skipCountFactor to contents of default entry "skipCountFactor" as real
-			
-			
 			
 		end tell
 	end loadSettings
