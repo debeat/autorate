@@ -39,8 +39,10 @@ global useHalfStarForItemsWithMoreSkipsThanPlays
 global minRating
 global maxRating
 global skipCountFactor
-global frequencyMethodOptimismFactor
-global countMethodOptimismFactor
+global frequencyMethodOptimismFactor1
+global countMethodOptimismFactor1
+global frequencyMethodOptimismFactor2
+global countMethodOptimismFactor2
 global lowerPercentile
 global upperPercentile
 global usePercentileScaleMethod
@@ -78,6 +80,8 @@ script AutoRateController
 					set countList to {}
 					set sortedFrequencyList to {}
 					set sortedCountList to {}
+					set frequencyListRef to a reference to frequencyList
+					set countListRef to a reference to countList
 					
 					try
 						tell AutoRateController to set thePlaylist to getPlaylist()
@@ -136,8 +140,8 @@ script AutoRateController
 								
 								
 								if usePercentileScaleMethod then
-									copy (combinedCount as string) to the end of the countList
-									copy (combinedFrequency as string) to the end of the frequencyList
+									copy (combinedCount) to the end of countList
+									copy (combinedFrequency) to the end of frequencyList
 								else
 									set sumFrequency to sumFrequency + combinedFrequency
 									set sumSquaredFrequency to sumSquaredFrequency + (combinedFrequency ^ 2)
@@ -286,20 +290,11 @@ script AutoRateController
 					
 					-- log "Entering rating assignment loop"
 					
-					(*
-						useHalfStarForItemsWithMoreSkipsThanPlays [boolean] -- will override statistical calculations, see below. Not valid if using whole star only ratings
-						minRating [integer] -- ie 20 = 1 star. Note that tracks that have never been played OR skipped always get a rating of zero.
-						maxRating [integer] -- ie 100= 5 star
-						skipCountFactor [integer] -- are skips considered more important than plays? 
-						frequencyMethodOptimismFactor
-						countMethodOptimismFactor				
-					*)
-					-- end of new parameters
-					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
-					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 as integer -- ie 1 star
+					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 -- ie 1 star
 					
 					set theTrackCount to 0
+					set ratingScale to maxRating - minRating
 					repeat with theTrack in tracksToRateList
 						if not isRunning then exit repeat
 						set theTrackCount to theTrackCount + 1
@@ -336,40 +331,50 @@ script AutoRateController
 								else if useHalfStarForItemsWithMoreSkipsThanPlays and (playCount < skipCount) then
 									set theRating to 10
 								else
+									
+									
 									-- Calculate frequency-based rating on a scale of 0 to (maxRating - minRating)
 									--================================================================
-									set frequencyMethodRating to ((maxRating - minRating) * ((combinedFrequency - minFrequency) / (maxFrequency - minFrequency)))
+									set frequencyMethodRating to (ratingScale * ((combinedFrequency - minFrequency) / (maxFrequency - minFrequency)))
 									
-									-- Scale the rating above minRating by frequncyMethodOptimismFactor and round to integer
-									set frequencyMethodRating to (frequencyMethodRating * frequencyMethodOptimismFactor) as integer
+									-- Scale the rating by frequncyMethodOptimismFactor1, skew it by frequencyMethodOptimismFactor2 and round to integer
+									set frequencyMethodRating to ((frequencyMethodOptimismFactor1 + 1.0) * frequencyMethodRating + frequencyMethodOptimismFactor2 * (((ratingScale - frequencyMethodRating) * (frequencyMethodRating)) / ratingScale)) as integer
 									
-									--Check for lower outlier
-									if frequencyMethodRating < 0 then set frequencyMethodRating to 0
 									
-									-- Shift the rating up to the range (minRating --> maxRating)
-									set frequencyMethodRating to frequencyMethodRating + minRating
+									if frequencyMethodRating > ratingScale then
+										-- check for upper outlier
+										set frequencyMethodRating to maxRating
+										
+									else if frequencyMethodRating < 0 then
+										--Check for lower outlier
+										set frequencyMethodRating to minRating
+									else
+										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
+										set frequencyMethodRating to frequencyMethodRating + minRating
+									end if
 									
-									-- check for upper outlier
-									if frequencyMethodRating > maxRating then set frequencyMethodRating to maxRating
 									--================================================================
 									-- End of Frequency-based rating
 									
 									
 									-- Calculate count-based rating on a scale of 0 to (maxRating - minRating)
 									--================================================================								
-									set countMethodRating to ((maxRating - minRating) * ((combinedCount - minCount) / (maxCount - minCount)))
+									set countMethodRating to (ratingScale * ((combinedCount - minCount) / (maxCount - minCount)))
 									
-									-- Scale the rating above theMinRating by countMethodOptimismFactor and round to integer
-									set countMethodRating to (countMethodRating * countMethodOptimismFactor) as integer
+									-- Scale the rating by countMethodOptimismFactor1, skew it by countMethodOptimismFactor2 and round to integer
+									set countMethodRating to ((countMethodOptimismFactor1 + 1.0) * countMethodRating + countMethodOptimismFactor2 * (((ratingScale - countMethodRating) * (countMethodRating)) / ratingScale)) as integer
 									
-									--Check for lower outlier
-									if countMethodRating < 0 then set countMethodRating to 0
-									
-									-- Shift the rating up to the range (theMinRating --> theMaxRating)
-									set countMethodRating to countMethodRating + minRating
-									
-									-- check for upper outlier
-									if countMethodRating > maxRating then set countMethodRating to maxRating
+									if countMethodRating > ratingScale then
+										-- check for upper outlier
+										set countMethodRating to maxRating
+										
+									else if countMethodRating < 0 then
+										--Check for lower outlier
+										set countMethodRating to minRating
+									else
+										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
+										set countMethodRating to countMethodRating + minRating
+									end if
 									--================================================================
 									-- End of Count-based rating
 									
@@ -554,8 +559,10 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:true}
 			make new default entry at end of default entries with properties {name:"minRating", contents:(20 as number)}
 			make new default entry at end of default entries with properties {name:"maxRating", contents:(100 as number)}
-			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor", contents:(1.0 as number)}
-			make new default entry at end of default entries with properties {name:"countMethodOptimismFactor", contents:(1.0 as number)}
+			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor1", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"countMethodOptimismFactor1", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor2", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"countMethodOptimismFactor2", contents:(0.0 as number)}
 			--Parameters for analysis
 			make new default entry at end of default entries with properties {name:"usePercentileScaleMethod", contents:true}
 			make new default entry at end of default entries with properties {name:"lowerPercentile", contents:(0.025 as number)}
@@ -589,8 +596,10 @@ script AutoRateController
 			set useHalfStarForItemsWithMoreSkipsThanPlays to contents of default entry "useHalfStarForItemsWithMoreSkipsThanPlays" as boolean
 			set minRating to contents of default entry "minRating" as integer
 			set maxRating to contents of default entry "maxRating" as integer
-			set frequencyMethodOptimismFactor to contents of default entry "frequencyMethodOptimismFactor" as real
-			set countMethodOptimismFactor to contents of default entry "countMethodOptimismFactor" as real
+			set frequencyMethodOptimismFactor1 to contents of default entry "frequencyMethodOptimismFactor1" as real
+			set countMethodOptimismFactor1 to contents of default entry "countMethodOptimismFactor1" as real
+			set frequencyMethodOptimismFactor2 to contents of default entry "frequencyMethodOptimismFactor2" as real
+			set countMethodOptimismFactor2 to contents of default entry "countMethodOptimismFactor2" as real
 			--Analysis
 			set usePercentileScaleMethod to contents of default entry "usePercentileScaleMethod" as boolean
 			set lowerPercentile to contents of default entry "lowerPercentile" as real
