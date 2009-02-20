@@ -641,7 +641,22 @@ script AutoRateController
 		(*
 		Though sorting could be done natively (albeit manually) in applescript, this runs about 50,000 times faster.
 			I tried it using Apple's sort sub routine @ 
-			applescript://com.apple.scripteditor/?action=new&script=on%20simple_sort%28my_list%29%0D%09set%20the%20index_list%20to%20%7B%7D%0D%09set%20the%20sorted_list%20to%20%7B%7D%0D%09repeat%20%28the%20number%20of%20items%20in%20my_list%29%20times%0D%09%09set%20the%20low_item%20to%20%22%22%0D%09%09repeat%20with%20i%20from%201%20to%20%28number%20of%20items%20in%20my_list%29%0D%09%09%09if%20i%20is%20not%20in%20the%20index_list%20then%0D%09%09%09%09set%20this_item%20to%20item%20i%20of%20my_list%20as%20text%0D%09%09%09%09if%20the%20low_item%20is%20%22%22%20then%0D%09%09%09%09%09set%20the%20low_item%20to%20this_item%0D%09%09%09%09%09set%20the%20low_item_index%20to%20i%0D%09%09%09%09else%20if%20this_item%20comes%20before%20the%20low_item%20then%0D%09%09%09%09%09set%20the%20low_item%20to%20this_item%0D%09%09%09%09%09set%20the%20low_item_index%20to%20i%0D%09%09%09%09end%20if%0D%09%09%09end%20if%0D%09%09end%20repeat%0D%09%09set%20the%20end%20of%20sorted_list%20to%20the%20low_item%0D%09%09set%20the%20end%20of%20the%20index_list%20to%20the%20low_item_index%0D%09end%20repeat%0D%09return%20the%20sorted_list%0Dend%20simple_sort
+			
+			applescript://com.apple.scripteditor/?action=new&script=on%20simple_sort%28my_list%29%0D%09set
+			%20the%20index_list%20to%20%7B%7D%0D%09set%20the%20sorted_list%20to%20%7B%7D%0D
+			%09repeat%20%28the%20number%20of%20items%20in%20my_list%29%20times%0D%09%09set
+			%20the%20low_item%20to%20%22%22%0D%09%09repeat%20with%20i%20from%201%20to%20
+			%28number%20of%20items%20in%20my_list%29%0D%09%09%09if%20i%20is%20not%20in%20the
+			%20index_list%20then%0D%09%09%09%09set%20this_item%20to%20item%20i%20of%20my_list
+			%20as%20text%0D%09%09%09%09if%20the%20low_item%20is%20%22%22%20then%0D%09%09
+			%09%09%09set%20the%20low_item%20to%20this_item%0D%09%09%09%09%09set%20the
+			%20low_item_index%20to%20i%0D%09%09%09%09else%20if%20this_item%20comes%20before
+			%20the%20low_item%20then%0D%09%09%09%09%09set%20the%20low_item%20to%20this_item
+			%0D%09%09%09%09%09set%20the%20low_item_index%20to%20i%0D%09%09%09%09end%20if
+			%0D%09%09%09end%20if%0D%09%09end%20repeat%0D%09%09set%20the%20end%20of%20sorted_list
+			%20to%20the%20low_item%0D%09%09set%20the%20end%20of%20the%20index_list%20to%20the
+			%20low_item_index%0D%09end%20repeat%0D%09return%20the%20sorted_list%0Dend%20simple_sort
+			
 			Assuming that is as efficient as it's going to get (?) I killed the task after an hour in
 			favour of this code which takes ~1 second on my G4 for ~3000 songs. The only problem I
 			can see is if someone opts out of installing the BSD sub-system when installing OS X 
