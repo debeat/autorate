@@ -4,7 +4,7 @@
 --  Copyright 2007 Michael Tyson. 
 --  http://michael.tyson.id.au
 --
--- Additions and modifications by Brandon Mol. 
+-- Additions and modifications by Brandon Mol ....  brandon.mol [at] gmail [dot] com
 --
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -39,16 +39,22 @@ global useHalfStarForItemsWithMoreSkipsThanPlays
 global minRating
 global maxRating
 global skipCountFactor
+
+(*
 global frequencyMethodOptimismFactor1
 global countMethodOptimismFactor1
 global frequencyMethodOptimismFactor2
 global countMethodOptimismFactor2
+*)
+
+global skewCoefficient0
+global skewCoefficient1
+global skewCoefficient2
+
 global lowerPercentile
 global upperPercentile
 global usePercentileScaleMethod
 global logStats
-global analysisGroupNames
-
 
 -- Main controller
 script AutoRateController
@@ -189,14 +195,7 @@ script AutoRateController
 							--set the scaleMethod to 2
 							
 							if usePercentileScaleMethod then
-								
-								--display dialog "Using percentile based scaling."
 								-- Calculate percentile method
-								
-								
-								--use the 2.5 and 97.5 percentiles (adjustable)
-								--set theLowerPercentile to 0.025
-								--set theUpperPercentile to 0.975
 								
 								--sort the lists so we can find the item at lower and upper percentiles
 								set the sortedFrequencyList to my unixSort(the frequencyList)
@@ -293,8 +292,34 @@ script AutoRateController
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
 					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 -- ie 1 star
 					
+					
+					
+					-- to replace "optimism factors"
+					(*
+					skewCoefficient0     [-2...0...+2] @ 0.5 star intervals 
+					skewCoefficient1     [-2...0...+2] @ 0.5 star intervals
+					skewCoefficient2     [0...+2] @ 0.5 star intervals
+					*)
+					
+					--change "star-based" values to the correct range
+					set skewCoefficient0 to skewCoefficient0 / 5.0
+					set skewCoefficient1 to (skewCoefficient1 / 5.0) + 1.0
+					set skewCoefficient2 to skewCoefficient2 / 5.0
+					
+					set n to (10.0 ^ (skewCoefficient2 * 8)) - 1.0
+					(*
+					The "8", above, is a value that, experimentally, gave the full range of results when using input 
+					values from 0 to 0.4 to be consisten with the others and it is approximately a 40% boost of mid range values. 
+					*)
+					set nSquared to n * n
+					set m to ((2 * n) + 1) ^ 0.5
+					
 					set theTrackCount to 0
 					set ratingScale to maxRating - minRating
+					set frequencyScale to maxFrequency - minFrequency
+					set countScale to maxCount - minCount
+					
+					
 					repeat with theTrack in tracksToRateList
 						if not isRunning then exit repeat
 						set theTrackCount to theTrackCount + 1
@@ -333,18 +358,26 @@ script AutoRateController
 								else
 									
 									
-									-- Calculate frequency-based rating on a scale of 0 to (maxRating - minRating)
+									-- Calculate frequency-based rating on a scale of minRating to maxRating
 									--================================================================
-									set frequencyMethodRating to (ratingScale * ((combinedFrequency - minFrequency) / (maxFrequency - minFrequency)))
 									
-									-- Scale the rating by frequncyMethodOptimismFactor1, skew it by frequencyMethodOptimismFactor2 and round to integer
-									set frequencyMethodRating to ((frequencyMethodOptimismFactor1 + 1.0) * frequencyMethodRating + frequencyMethodOptimismFactor2 * (((ratingScale - frequencyMethodRating) * (frequencyMethodRating)) / ratingScale)) as integer
+									-- Set linear rating from 0.0 to 1.0
+									set frequencyMethodRating to ((combinedFrequency - minFrequency) / frequencyScale)
 									
+									-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
+									if frequencyMethodRating > 1.0 then
+										set frequencyMethodRating to 1.0
+									else if frequencyMethodRating < 0.0 then
+										set frequencyMethodRating to 0.0
+									end if
+									
+									-- Hyperbolic skewing
+									set frequencyMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((frequencyMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
+									set frequencyMethodRating to (ratingScale * frequencyMethodRating) as integer
 									
 									if frequencyMethodRating > ratingScale then
 										-- check for upper outlier
 										set frequencyMethodRating to maxRating
-										
 									else if frequencyMethodRating < 0 then
 										--Check for lower outlier
 										set frequencyMethodRating to minRating
@@ -357,17 +390,26 @@ script AutoRateController
 									-- End of Frequency-based rating
 									
 									
-									-- Calculate count-based rating on a scale of 0 to (maxRating - minRating)
+									-- Calculate count-based rating on a scale of minRating to maxRating
 									--================================================================								
-									set countMethodRating to (ratingScale * ((combinedCount - minCount) / (maxCount - minCount)))
 									
-									-- Scale the rating by countMethodOptimismFactor1, skew it by countMethodOptimismFactor2 and round to integer
-									set countMethodRating to ((countMethodOptimismFactor1 + 1.0) * countMethodRating + countMethodOptimismFactor2 * (((ratingScale - countMethodRating) * (countMethodRating)) / ratingScale)) as integer
+									-- Set linear rating from 0.0 to 1.0
+									set countMethodRating to ((combinedCount - minCount) / countScale)
+									
+									-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
+									if countMethodRating > 1.0 then
+										set countMethodRating to 1.0
+									else if countMethodRating < 0.0 then
+										set countMethodRating to 0.0
+									end if
+									
+									--Hyperbolic skewing
+									set countMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((countMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
+									set countMethodRating to (ratingScale * countMethodRating) as integer
 									
 									if countMethodRating > ratingScale then
 										-- check for upper outlier
 										set countMethodRating to maxRating
-										
 									else if countMethodRating < 0 then
 										--Check for lower outlier
 										set countMethodRating to minRating
@@ -375,6 +417,7 @@ script AutoRateController
 										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
 										set countMethodRating to countMethodRating + minRating
 									end if
+									
 									--================================================================
 									-- End of Count-based rating
 									
@@ -559,10 +602,9 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:true}
 			make new default entry at end of default entries with properties {name:"minRating", contents:(20 as number)}
 			make new default entry at end of default entries with properties {name:"maxRating", contents:(100 as number)}
-			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor1", contents:(0.0 as number)}
-			make new default entry at end of default entries with properties {name:"countMethodOptimismFactor1", contents:(0.0 as number)}
-			make new default entry at end of default entries with properties {name:"frequencyMethodOptimismFactor2", contents:(0.0 as number)}
-			make new default entry at end of default entries with properties {name:"countMethodOptimismFactor2", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"skewCoefficient0", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"skewCoefficient1", contents:(0.0 as number)}
+			make new default entry at end of default entries with properties {name:"skewCoefficient2", contents:(0.0 as number)}
 			--Parameters for analysis
 			make new default entry at end of default entries with properties {name:"usePercentileScaleMethod", contents:true}
 			make new default entry at end of default entries with properties {name:"lowerPercentile", contents:(0.025 as number)}
@@ -596,10 +638,9 @@ script AutoRateController
 			set useHalfStarForItemsWithMoreSkipsThanPlays to contents of default entry "useHalfStarForItemsWithMoreSkipsThanPlays" as boolean
 			set minRating to contents of default entry "minRating" as integer
 			set maxRating to contents of default entry "maxRating" as integer
-			set frequencyMethodOptimismFactor1 to contents of default entry "frequencyMethodOptimismFactor1" as real
-			set countMethodOptimismFactor1 to contents of default entry "countMethodOptimismFactor1" as real
-			set frequencyMethodOptimismFactor2 to contents of default entry "frequencyMethodOptimismFactor2" as real
-			set countMethodOptimismFactor2 to contents of default entry "countMethodOptimismFactor2" as real
+			set skewCoefficient0 to contents of default entry "skewCoefficient0" as real
+			set skewCoefficient1 to contents of default entry "skewCoefficient1" as real
+			set skewCoefficient2 to contents of default entry "skewCoefficient2" as real
 			--Analysis
 			set usePercentileScaleMethod to contents of default entry "usePercentileScaleMethod" as boolean
 			set lowerPercentile to contents of default entry "lowerPercentile" as real
