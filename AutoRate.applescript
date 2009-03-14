@@ -1,8 +1,8 @@
 -- AutoRate.applescript
 -- Rate tracks in iTunes based on play/skip frequency
 -- 
---  Copyright 2007 Michael Tyson. 
---  http://michael.tyson.id.au
+--  Copyright 2007-2009 Tzi Software
+--  http://tzisoftware.com
 --
 -- Additions and modifications by Brandon Mol ....  brandon.mol [at] gmail [dot] com
 --
@@ -40,13 +40,6 @@ global minRating
 global maxRating
 global skipCountFactor
 
-(*
-global frequencyMethodOptimismFactor1
-global countMethodOptimismFactor1
-global frequencyMethodOptimismFactor2
-global countMethodOptimismFactor2
-*)
-
 global skewCoefficient0
 global skewCoefficient1
 global skewCoefficient2
@@ -55,6 +48,9 @@ global lowerPercentile
 global upperPercentile
 global usePercentileScaleMethod
 global logStats
+
+property skipCountSlider : ""
+property playlistPopup : ""
 
 -- Main controller
 script AutoRateController
@@ -571,13 +567,6 @@ script AutoRateController
 	on setup()
 		set isRunning to false
 		
-		tell menu of popup button "playlist" of drawer "drawer" of window "main"
-			tell application "iTunes" to set thePlaylists to user playlists
-			repeat with thePlaylist in thePlaylists
-				make new menu item at end of menu items with properties {title:name of thePlaylist}
-			end repeat
-		end tell
-		
 		initSettings()
 		
 	end setup
@@ -647,7 +636,8 @@ script AutoRateController
 			set upperPercentile to contents of default entry "upperPercentile" as real
 			set logStats to contents of default entry "logStats" as boolean
 			--Both
-			set skipCountFactor to contents of default entry "skipCountFactor" as real
+			set skipCountFactor to contents of default entry "skipCountFactor"
+			if skipCountFactor is "°" then set skipCountFactor to 9999999
 			
 		end tell
 	end loadSettings
@@ -718,6 +708,7 @@ script AutoRateController
 	
 end script
 
+
 on clicked theObject
 	if name of theObject is "clearCacheButton" then
 		tell AutoRateController to clearCache()
@@ -736,25 +727,64 @@ on clicked theObject
 	end if
 end clicked
 
+on should quit after last window closed theObject
+	return false
+end should quit after last window closed
+
 on will finish launching theObject
 	tell AutoRateController to setup()
 end will finish launching
 
-on should quit after last window closed theObject
-	return true
-end should quit after last window closed
-
 on action theObject
-	(*Add your script here.*)
+	if name of theObject is "skipCountSlider" then
+		if content of theObject is 2.0 then
+			set skipCountFactor to "°"
+		else if content of theObject = 1 then
+			set skipCountFactor to 1
+		else if content of theObject ² 1 then
+			set skipCountFactor to text 1 through 3 of (content of theObject as string)
+		else
+			set skipCountFactor to round (1 + (4 * (((content of theObject as real) - 1.0) / 0.82)))
+		end if
+		tell user defaults to set contents of default entry "skipCountFactor" to skipCountFactor
+	end if
 end action
 
 on awake from nib theObject
-	if name of theObject is "drawer" then
-		set content size of theObject to {440, 150}
+	
+	if name of theObject is "playlist" then
+		set playlistPopup to theObject
+		
+		-- Populate popup menu with playlists
+		tell menu of playlistPopup
+			tell application "iTunes" to set thePlaylists to user playlists
+			repeat with thePlaylist in thePlaylists
+				make new menu item at end of menu items with properties {title:name of thePlaylist}
+			end repeat
+		end tell
+		
+	else if name of theObject is "skipCountSlider" then
+		set skipCountSlider to theObject
+		
+		-- Set value of skip count slider
+		tell user defaults to set skipCountFactor to contents of default entry "skipCountFactor"
+		
+		if skipCountFactor is "°" then
+			set content of skipCountSlider to 2.0
+		else if skipCountFactor ² 1 then
+			set content of skipCountSlider to skipCountFactor
+		else if skipCountFactor > 1 then
+			set content of skipCountSlider to ((((skipCountFactor - 1) / 4) * 0.8) + 1)
+		end if
+		
 	end if
+	
 end awake from nib
 
 on will open theObject
 	set state of button "showPrefs" of window "main" to on state
 end will open
 
+on will close theObject
+	quit
+end will close
