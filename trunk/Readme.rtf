@@ -1,6 +1,5 @@
-{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf420
-{\fonttbl\f0\fswiss\fcharset77 Helvetica-Bold;\f1\fswiss\fcharset77 Helvetica;\f2\fswiss\fcharset77 Helvetica-Oblique;
-}
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf430
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid1}
 {\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid2}}
@@ -9,80 +8,78 @@
 {\author Mike Tyson}}\paperw11905\paperh16837\margl1440\margr1440\vieww12820\viewh11040\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f0\b\fs36 \cf0 \ul \ulc0 AutoRate v1.4.2
-\f1\b0\fs24 \ulnone \
+\f0\b\fs36 \cf0 AutoRate v1.5.0
+\b0\fs24 \
 
-\f2\i\fs20 19 June 2007
-\f1\i0\fs24 \
+\i\fs20 14 March 2009
+\i0\fs24 \
 \
 This application sets the rating for all tracks in your iTunes library according to how often each track is played, and how often each track is skipped.\
 \
 The formula uses a combination of play and skip frequency (averaged out over the life of each track), and the play and skip count. Tracks that are frequently skipped are penalised, while often-played tracks are given a higher rating.\
 \
 
-\f0\b What's new in this version
-\f1\b0 \
+\b What's new in this version
+\b0 \
 \
 \pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls1\ilvl0\cf0 {\listtext	\'a5	}Moved preferences to a drawer\
-{\listtext	\'a5	}Moved playlist selection to drawer\
-{\listtext	\'a5	}Removed log transform, now unnecessary\
-{\listtext	\'a5	}Save window position\
-{\listtext	\'a5	}Save selected playlist in preferences\
+\ls1\ilvl0\cf0 {\listtext	\'95	}New highly customizable rating formula, thanks to Brandon Mol's hard work\
+\ls1\ilvl0{\listtext	\'95	}New interface style\
+\ls1\ilvl0{\listtext	\'95	}New preferences window\
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 
-\f0\b Default configuration and overriding ratings
-\f1\b0 \
+\b Default configuration and overriding ratings
+\b0 \
 \
 By default, AutoRate will only rate tracks that you have not rated.  Thus, if you wish to continue using AutoRate to update your ratings, you will need to open AutoRate's preferences and allow AutoRate to override ratings.\
 \
 
-\f0\b Automatic rating
-\f1\b0 \
+\b Automatic rating
+\b0 \
 \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f2\i \cf0 Rate Now.scpt
-\f1\i0  is an Applescript that launches AutoRate, immediately begins the rating process, and quits after completion.  This can be run regularly from 
-\f2\i cron
-\f1\i0 , for example.\
+\i \cf0 Rate Now.scpt
+\i0  is an Applescript that launches AutoRate, immediately begins the rating process, and quits after completion.  This can be run regularly from 
+\i cron
+\i0 , for example.\
 To call this script daily:\
 \
 \pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls2\ilvl0\cf0 {\listtext	\'a5	}Put 
-\f2\i Rate Now.scpt
-\f1\i0  in ~/Library/Scripts\
-{\listtext	\'a5	}Open the Terminal application\
-{\listtext	\'a5	}Begin editing the crontab with: 
-\f2\i crontab -e\
+\ls2\ilvl0\cf0 {\listtext	\'95	}Put 
+\i Rate Now.scpt
+\i0  in ~/Library/Scripts\
+{\listtext	\'95	}Open the Terminal application\
+{\listtext	\'95	}Begin editing the crontab with: 
+\i crontab -e\
 \ls2\ilvl0
-\f1\i0 {\listtext	\'a5	}Press 'i' to begin inserting text\
-{\listtext	\'a5	}Enter the following: 
-\f2\i 0 3 * * * osascript ~/Library/Scripts/Rate\\ Now.scpt
-\f1\i0 \
-{\listtext	\'a5	}Press Escape, then Shift-ZZ to save and quit\
+\i0 {\listtext	\'95	}Press 'i' to begin inserting text\
+{\listtext	\'95	}Enter the following: 
+\i 0 3 * * * osascript ~/Library/Scripts/Rate\\ Now.scpt
+\i0 \
+{\listtext	\'95	}Press Escape, then Shift-ZZ to save and quit\
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 This will cause the 
-\f2\i Rate Now
-\f1\i0  script to be run at 3am every day.\
+\i Rate Now
+\i0  script to be run at 3am every day.\
 Edit the 
-\f2\i Rate Now
-\f1\i0  script to change settings for playlist and whether the application should run hidden.\
+\i Rate Now
+\i0  script to change settings for playlist and whether the application should run hidden.\
 Note that for this to be useful, you should allow AutoRate to override ratings by unchecking 'Only set ratings for unrated tracks'.\
 \
 
-\f0\b Updates
-\f1\b0 \
+\b Updates
+\b0 \
 \
 The latest version of this application can be found at:\
 \
 http://tzisoftware.com/products/autorate\
 \
 
-\f0\b Support/Comments
-\f1\b0 \
+\b Support/Comments
+\b0 \
 \
 Questions or comments can be directed to the forum at http://tzisoftware.com/forum\
 \
