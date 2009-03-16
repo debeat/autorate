@@ -254,6 +254,9 @@ script AutoRateController
 				end if
 				-- log "Left analysis loop"
 				
+				set minRatingPercent to minRating * 20
+				set maxRatingPercent to maxRating * 20
+				
 				
 				-- Second loop: Assign ratings
 				if isRunning then
@@ -286,7 +289,7 @@ script AutoRateController
 					-- log "Entering rating assignment loop"
 					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
-					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRating < 20) then set minRating to 20 -- ie 1 star
+					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRatingPercent < 20) then set minRatingPercent to 20 -- ie 1 star
 					
 					
 					
@@ -311,7 +314,7 @@ script AutoRateController
 					set m to ((2 * n) + 1) ^ 0.5
 					
 					set theTrackCount to 0
-					set ratingScale to maxRating - minRating
+					set ratingScale to maxRatingPercent - minRatingPercent
 					set frequencyScale to maxFrequency - minFrequency
 					set countScale to maxCount - minCount
 					
@@ -373,13 +376,13 @@ script AutoRateController
 									
 									if frequencyMethodRating > ratingScale then
 										-- check for upper outlier
-										set frequencyMethodRating to maxRating
+										set frequencyMethodRating to maxRatingPercent
 									else if frequencyMethodRating < 0 then
 										--Check for lower outlier
-										set frequencyMethodRating to minRating
+										set frequencyMethodRating to minRatingPercent
 									else
 										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
-										set frequencyMethodRating to frequencyMethodRating + minRating
+										set frequencyMethodRating to frequencyMethodRating + minRatingPercent
 									end if
 									
 									--================================================================
@@ -405,13 +408,13 @@ script AutoRateController
 									
 									if countMethodRating > ratingScale then
 										-- check for upper outlier
-										set countMethodRating to maxRating
+										set countMethodRating to maxRatingPercent
 									else if countMethodRating < 0 then
 										--Check for lower outlier
-										set countMethodRating to minRating
+										set countMethodRating to minRatingPercent
 									else
 										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
-										set countMethodRating to countMethodRating + minRating
+										set countMethodRating to countMethodRating + minRatingPercent
 									end if
 									
 									--================================================================
@@ -589,8 +592,8 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"minCount", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"maxCount", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:true}
-			make new default entry at end of default entries with properties {name:"minRating", contents:(20 as number)}
-			make new default entry at end of default entries with properties {name:"maxRating", contents:(100 as number)}
+			make new default entry at end of default entries with properties {name:"minRating", contents:(1 as number)}
+			make new default entry at end of default entries with properties {name:"maxRating", contents:(5 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient0", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient1", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient2", contents:(0.0 as number)}
@@ -625,8 +628,8 @@ script AutoRateController
 			set minCount to contents of default entry "minCount" as integer
 			set maxCount to contents of default entry "maxCount" as integer
 			set useHalfStarForItemsWithMoreSkipsThanPlays to contents of default entry "useHalfStarForItemsWithMoreSkipsThanPlays" as boolean
-			set minRating to contents of default entry "minRating" as integer
-			set maxRating to contents of default entry "maxRating" as integer
+			set minRating to contents of default entry "minRating" as real
+			set maxRating to contents of default entry "maxRating" as real
 			set skewCoefficient0 to contents of default entry "skewCoefficient0" as real
 			set skewCoefficient1 to contents of default entry "skewCoefficient1" as real
 			set skewCoefficient2 to contents of default entry "skewCoefficient2" as real
