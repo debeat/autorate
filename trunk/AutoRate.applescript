@@ -289,18 +289,19 @@ script AutoRateController
 					-- log "Entering rating assignment loop"
 					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
-					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRatingPercent < 20) then set minRatingPercent to 20 -- ie 1 star
+					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRatingPercent < 20) then
+						set minRatingPercent to 20 -- ie 1 star
+					else if minRatingPercent < 10 then
+						set minRatingPercent to 10 --ie 1/2 star
+					end if
 					
-					
-					
-					-- to replace "optimism factors"
 					(*
 					skewCoefficient0     [-2...0...+2] @ 0.5 star intervals 
 					skewCoefficient1     [-2...0...+2] @ 0.5 star intervals
 					skewCoefficient2     [0...+2] @ 0.5 star intervals
 					*)
 					
-					--change "star-based" values to the correct range
+					--change "star-based" values to the correct range for the math to work out
 					set skewCoefficient0 to skewCoefficient0 / 5.0
 					set skewCoefficient1 to (skewCoefficient1 / 5.0) + 1.0
 					set skewCoefficient2 to skewCoefficient2 / 5.0
@@ -357,7 +358,7 @@ script AutoRateController
 								else
 									
 									
-									-- Calculate frequency-based rating on a scale of minRating to maxRating
+									-- Calculate frequency-based rating on a scale of minRatingPercent to maxRatingPercent
 									--================================================================
 									
 									-- Set linear rating from 0.0 to 1.0
@@ -381,7 +382,7 @@ script AutoRateController
 										--Check for lower outlier
 										set frequencyMethodRating to minRatingPercent
 									else
-										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
+										-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
 										set frequencyMethodRating to frequencyMethodRating + minRatingPercent
 									end if
 									
@@ -389,7 +390,7 @@ script AutoRateController
 									-- End of Frequency-based rating
 									
 									
-									-- Calculate count-based rating on a scale of minRating to maxRating
+									-- Calculate count-based rating on a scale of minRatingPercent to maxRatingPercent
 									--================================================================								
 									
 									-- Set linear rating from 0.0 to 1.0
@@ -413,7 +414,7 @@ script AutoRateController
 										--Check for lower outlier
 										set countMethodRating to minRatingPercent
 									else
-										-- Shift the rating up to the range (minRating --> maxRating) from (0 --> ratingScale)
+										-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
 										set countMethodRating to countMethodRating + minRatingPercent
 									end if
 									
@@ -575,6 +576,9 @@ script AutoRateController
 	end setup
 	
 	on initSettings()
+		--Used to determine if preferences need to be reset or changed. 
+		set currentPreferenceVersionID to "1.5.0-B2"
+		
 		tell user defaults
 			-- Register default entries (won't overwrite existing settings)
 			make new default entry at end of default entries with properties {name:"lastAnalysisDate", contents:""}
@@ -592,8 +596,8 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"minCount", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"maxCount", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"useHalfStarForItemsWithMoreSkipsThanPlays", contents:true}
-			make new default entry at end of default entries with properties {name:"minRating", contents:(1 as number)}
-			make new default entry at end of default entries with properties {name:"maxRating", contents:(5 as number)}
+			make new default entry at end of default entries with properties {name:"minRating", contents:(1.0 as number)}
+			make new default entry at end of default entries with properties {name:"maxRating", contents:(5.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient0", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient1", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient2", contents:(0.0 as number)}
@@ -604,10 +608,36 @@ script AutoRateController
 			--Parameters for both
 			make new default entry at end of default entries with properties {name:"skipCountFactor", contents:(1.0 as number)}
 			make new default entry at end of default entries with properties {name:"logStats", contents:false}
+			make new default entry at end of default entries with properties {name:"preferenceVersionID", contents:"none"}
 			
 			register
+			
+			set savedPreferenceVersionID to contents of default entry "preferenceVersionID"
+			
 		end tell
+		
+		
+		
+		if savedPreferenceVersionID is not currentPreferenceVersionID then resetSettings(currentPreferenceVersionID)
+		
 	end initSettings
+	
+	on resetSettings(versionStr)
+		-- Any settings whose ranges or format changes should be in here to make sure they are over written.
+		tell user defaults
+			try
+				--changes in version 1.5.0 beta 2 "1.5.0-B2"
+				set contents of default entry "minRating" to 1.0 as number
+				set contents of default entry "maxRating" to 5.0 as number
+				
+				--changes in version..... next version?
+				
+				
+				set contents of default entry "preferenceVersionID" to versionStr as text
+			end try
+			register
+		end tell
+	end resetSettings
 	
 	on loadSettings()
 		tell user defaults
