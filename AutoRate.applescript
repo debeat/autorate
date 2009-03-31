@@ -44,9 +44,12 @@ global skewCoefficient0
 global skewCoefficient1
 global skewCoefficient2
 
+global binLimitFrequencies
+global binLimitCounts
+
 global lowerPercentile
 global upperPercentile
-global usePercentileScaleMethod
+global useHistogramScaling
 global logStats
 
 property skipCountSlider : ""
@@ -71,7 +74,8 @@ script AutoRateController
 		tell application "iTunes"
 			with timeout of (20 * 60) seconds --20 minutes. Even with this at 1 second it produced no errors on my machine. I don't know why people are getting timeout errors
 				--Decide whether to run a statistical analysis
-				if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
+				
+				if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or binLimitFrequencies contains -1.0 or binLimitCounts contains -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
 					
 					-- Initialise statistical analysis temp values
 					set sumFrequency to 0
@@ -82,8 +86,6 @@ script AutoRateController
 					set countList to {}
 					set sortedFrequencyList to {}
 					set sortedCountList to {}
-					set frequencyListRef to a reference to frequencyList
-					set countListRef to a reference to countList
 					
 					try
 						tell AutoRateController to set thePlaylist to getPlaylist()
@@ -115,6 +117,9 @@ script AutoRateController
 					-- First loop: Get track playback statistics
 					set theTrackCount to 0
 					set numAnalysed to 0
+					
+					set numTracksToAnalyse to length of tracksToAnalyseList
+					
 					repeat with theTrack in tracksToAnalyseList
 						if not isRunning then exit repeat
 						set theTrackCount to theTrackCount + 1
@@ -125,7 +130,7 @@ script AutoRateController
 							-- log "Track is " & location of theTrack
 							
 							tell AutoRateController
-								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (length of tracksToAnalyseList))
+								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (numTracksToAnalyse as string))
 								incrementProgress()
 							end tell
 							
@@ -141,17 +146,11 @@ script AutoRateController
 								set combinedFrequency to (combinedCount / (theNow - theDateAdded))
 								
 								
-								if usePercentileScaleMethod then
-									copy (combinedCount) to the end of countList
-									copy (combinedFrequency) to the end of frequencyList
-								else
-									set sumFrequency to sumFrequency + combinedFrequency
-									set sumSquaredFrequency to sumSquaredFrequency + (combinedFrequency ^ 2)
-									set sumCount to sumCount + combinedCount
-									set sumSquaredCount to sumSquaredCount + (combinedCount ^ 2)
-								end if
+								
+								copy (combinedCount as real) to the end of countList
+								copy (combinedFrequency as real) to the end of frequencyList
 							end if
-							-- log "Frequency is " & (frequency as string)
+							
 							
 						on error errStr number errNumber
 							
@@ -179,63 +178,42 @@ script AutoRateController
 					
 					if isRunning then
 						try
-							(*
-						
-						Option to calculation statistics in 2 ways
-							Method 1. the mean +/- 2 standard deviations (95% of a normal distribution)
-							Method 2. on a scale between an upper and lower percentile 2.5 to 97.5% (the middle 95% of sample values. Better for non-normal distribution)
-						
-						Note that with this change we need to store the min and max values rather than the mean and standard deviations.
-						
-						*)
-							--set the scaleMethod to 2
 							
-							if usePercentileScaleMethod then
-								-- Calculate percentile method
-								
-								--sort the lists so we can find the item at lower and upper percentiles
-								set the sortedFrequencyList to my unixSort(the frequencyList)
-								set the sortedCountList to my unixSort(the countList)
-								
-								
-								--Prevent index out of bounds errors
-								set minIndex to ((the length of the sortedCountList) * lowerPercentile) as integer
-								if minIndex < 1 then set minIndex to 1
-								-- Ditto
-								set maxIndex to ((the length of the sortedCountList) * upperPercentile) as integer
-								if maxIndex > the length of the sortedCountList then set maxIndex to the length of the sortedCountList
-								--just in case the length of the count and frequency lists are different, which they shouldn't be...
-								if maxIndex > the length of the sortedFrequencyList then set maxIndex to the length of the sortedFrequencyList
-								
-								--Setting the lower and upper percentile values as the min and max
-								set minFrequency to (item minIndex of the sortedFrequencyList as real)
-								if minFrequency < 0 then set minFrequency to 0
-								set maxFrequency to (item maxIndex of the sortedFrequencyList as real)
-								
-								set minCount to (item minIndex of the sortedCountList as real)
-								if minCount < 0 then set minCount to 0
-								set maxCount to (item maxIndex of the sortedCountList as real)
-								
-							else
-								--display dialog "Using normal distribution based scaling."
-								-- Calculate normal distribution method
-								set averageFrequency to sumFrequency / numAnalysed
-								set averageCount to sumCount / numAnalysed
-								
-								-- Calculate standard deviations, allow replacing or shifting mean
-								set standardDeviationFrequency to ((sumSquaredFrequency - (2 * averageFrequency * sumFrequency) + (numAnalysed * (averageFrequency ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
-								set standardDeviationCount to ((sumSquaredCount - (2 * averageCount * sumCount) + (numAnalysed * (averageCount ^ 2))) / (numAnalysed - 1)) ^ (1 / 2)
-								
-								-- Set min and max to be 2*sd from the mean
-								set minFrequency to averageFrequency - (2 * standardDeviationFrequency)
-								set maxFrequency to averageFrequency + (2 * standardDeviationFrequency)
-								if minFrequency < 0 then set minFrequency to 0
-								set minCount to averageCount - (2 * standardDeviationCount)
-								set maxCount to averageCount + (2 * standardDeviationCount)
-								if minCount < 0 then set minCount to 0
-								
-							end if
+							--sort the lists so we can find the item at lower and upper percentiles and bin the values in a histogram.
+							set the sortedFrequencyList to my unixSort(the frequencyList)
+							set the sortedCountList to my unixSort(the countList)
 							
+							set minIndex to (numAnalysed * lowerPercentile) as integer
+							set maxIndex to (numAnalysed * upperPercentile) as integer
+							
+							--Prevent index out of bounds errors
+							if minIndex < 1 then set minIndex to 1
+							if maxIndex > numAnalysed then set maxIndex to numAnalysed
+							
+							
+							--Setting the lower and upper percentile values as the min and max
+							set minFrequency to (item minIndex of the sortedFrequencyList as real)
+							if minFrequency < 0.0 then set minFrequency to 0.0
+							set maxFrequency to (item maxIndex of the sortedFrequencyList as real)
+							
+							set minCount to (item minIndex of the sortedCountList as real)
+							if minCount < 0.0 then set minCount to 0.0
+							set maxCount to (item maxIndex of the sortedCountList as real)
+							
+							set binLimits to {0.01, 0.04, 0.11, 0.23, 0.4, 0.6, 0.77, 0.89, 0.96, 1.0} --Cumulative normal density for each bin
+							set binLimitFrequencies to {}
+							set binLimitCounts to {}
+							
+							repeat with binLimit in the binLimits
+								set the binLimitIndex to (numAnalysed * (binLimit as real)) as integer
+								if binLimitIndex < 1 then
+									set binLimitIndex to 1
+								else if binLimitIndex > numAnalysed then
+									set binLimitIndex to numAnalysed
+								end if
+								copy ((item binLimitIndex of the sortedFrequencyList) as real) to the end of the binLimitFrequencies
+								copy item binLimitIndex of the sortedCountList to the end of the binLimitCounts
+							end repeat
 							
 							-- Remember when we last analysed
 							set lastAnalysisDate to theNow
@@ -289,17 +267,23 @@ script AutoRateController
 					-- log "Entering rating assignment loop"
 					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
+					--0 star ratings are always reserved for songs with no skips and no plays
 					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRatingPercent < 20) then
 						set minRatingPercent to 20 -- ie 1 star
 					else if minRatingPercent < 10 then
 						set minRatingPercent to 10 --ie 1/2 star
 					end if
 					
+					if wholeStarRatings then
+						set minRatingPercent to (minRatingPercent / 20 as integer) * 20
+						set maxRatingPercent to (maxRatingPercent / 20 as integer) * 20
+					end if
+					
 					(*
-					skewCoefficient0     [-2...0...+2] @ 0.5 star intervals 
-					skewCoefficient1     [-2...0...+2] @ 0.5 star intervals
-					skewCoefficient2     [0...+2] @ 0.5 star intervals
-					*)
+						skewCoefficient0     [-2...0...+2] @ 0.5 star intervals 
+						skewCoefficient1     [-2...0...+2] @ 0.5 star intervals
+						skewCoefficient2     [0...+2] @ 0.5 star intervals
+						*)
 					
 					--change "star-based" values to the correct range for the math to work out
 					set skewCoefficient0 to skewCoefficient0 / 5.0
@@ -308,9 +292,9 @@ script AutoRateController
 					
 					set n to (10.0 ^ (skewCoefficient2 * 8)) - 1.0
 					(*
-					The "8", above, is a value that, experimentally, gave the full range of results when using input 
-					values from 0 to 0.4 to be consisten with the others and it is approximately a 40% boost of mid range values. 
-					*)
+						The "8", above, is a value that, experimentally, gave the full range of results when using input 
+						values from 0 to 0.4 to be consisten with the others and it is approximately a 40% boost of mid range values. 
+						*)
 					set nSquared to n * n
 					set m to ((2 * n) + 1) ^ 0.5
 					
@@ -319,6 +303,18 @@ script AutoRateController
 					set frequencyScale to maxFrequency - minFrequency
 					set countScale to maxCount - minCount
 					
+					set minBin to minRatingPercent / 10 as integer
+					set maxBin to maxRatingPercent / 10 as integer
+					--display dialog (minBin as string)
+					--display dialog (maxBin as string)
+					
+					if wholeStarRatings then
+						set binIncrement to 2
+					else
+						set binIncrement to 1
+					end if
+					
+					set numTracksToRate to the length of tracksToRateList
 					
 					repeat with theTrack in tracksToRateList
 						if not isRunning then exit repeat
@@ -330,10 +326,10 @@ script AutoRateController
 							
 							tell AutoRateController
 								incrementProgress()
-								setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & length of tracksToRateList)
+								setSecondaryMessage("Rating track " & (theTrackCount as string) & " of " & numTracksToRate)
 							end tell
 							
-							if not rateUnratedTracksOnly or rating of theTrack is 0 then
+							if (not rateUnratedTracksOnly) or (the rating of theTrack = 0) then
 								-- log "Track is " & location of theTrack
 								
 								set playCount to (played count of theTrack)
@@ -345,11 +341,11 @@ script AutoRateController
 								
 								
 								(*
-								Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
-								I am aware that this means skipped songs are rated higher than unplayed songs, which may be
-								counter-intuative, but lends itself to more meaningful ratings IMHO. Most people consider a rating 
-								of no stars to mean "unrated" rather to mean a rating of zero.
-								*)
+									Override everything if the track has never been played OR skipped and should therefore not have a rating assigned.
+									I am aware that this means skipped songs are rated higher than unplayed songs, which may be
+									counter-intuative, but lends itself to more meaningful ratings IMHO. Most people consider a rating 
+									of no stars to mean "unrated" rather to mean a rating of zero.
+									*)
 								if playCount = 0 and skipCount = 0 then
 									set theRating to 0
 									--Override calculated rating if the weighted skip count is greater than the play count and ignores rating memory
@@ -361,63 +357,78 @@ script AutoRateController
 									-- Calculate frequency-based rating on a scale of minRatingPercent to maxRatingPercent
 									--================================================================
 									
-									-- Set linear rating from 0.0 to 1.0
-									set frequencyMethodRating to ((combinedFrequency - minFrequency) / frequencyScale)
-									
-									-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
-									if frequencyMethodRating > 1.0 then
-										set frequencyMethodRating to 1.0
-									else if frequencyMethodRating < 0.0 then
-										set frequencyMethodRating to 0.0
-									end if
-									
-									-- Hyperbolic skewing
-									set frequencyMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((frequencyMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
-									set frequencyMethodRating to (ratingScale * frequencyMethodRating) as integer
-									
-									if frequencyMethodRating > ratingScale then
-										-- check for upper outlier
-										set frequencyMethodRating to maxRatingPercent
-									else if frequencyMethodRating < 0 then
-										--Check for lower outlier
-										set frequencyMethodRating to minRatingPercent
+									if useHistogramScaling then
+										set bin to minBin
+										repeat while (combinedFrequency > (item bin of binLimitFrequencies as real)) and bin < maxBin
+											set bin to bin + binIncrement
+										end repeat
+										set frequencyMethodRating to bin * 10.0
+										--log "F:" & (frequencyMethodRating as string)
 									else
-										-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
-										set frequencyMethodRating to frequencyMethodRating + minRatingPercent
+										set frequencyMethodRating to ((combinedFrequency - minFrequency) / frequencyScale)
+										-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
+										if frequencyMethodRating > 1.0 then
+											set frequencyMethodRating to 1.0
+										else if frequencyMethodRating < 0.0 then
+											set frequencyMethodRating to 0.0
+										end if
+										
+										-- Hyperbolic skewing
+										set frequencyMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((frequencyMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
+										set frequencyMethodRating to (ratingScale * frequencyMethodRating) as integer
+										
+										if frequencyMethodRating > ratingScale then
+											-- check for upper outlier
+											set frequencyMethodRating to maxRatingPercent
+										else if frequencyMethodRating < 0 then
+											--Check for lower outlier
+											set frequencyMethodRating to minRatingPercent
+										else
+											-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
+											set frequencyMethodRating to frequencyMethodRating + minRatingPercent
+										end if
 									end if
+									
+									
 									
 									--================================================================
 									-- End of Frequency-based rating
 									
 									
 									-- Calculate count-based rating on a scale of minRatingPercent to maxRatingPercent
-									--================================================================								
-									
+									--================================================================                              
 									-- Set linear rating from 0.0 to 1.0
-									set countMethodRating to ((combinedCount - minCount) / countScale)
-									
-									-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
-									if countMethodRating > 1.0 then
-										set countMethodRating to 1.0
-									else if countMethodRating < 0.0 then
-										set countMethodRating to 0.0
-									end if
-									
-									--Hyperbolic skewing
-									set countMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((countMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
-									set countMethodRating to (ratingScale * countMethodRating) as integer
-									
-									if countMethodRating > ratingScale then
-										-- check for upper outlier
-										set countMethodRating to maxRatingPercent
-									else if countMethodRating < 0 then
-										--Check for lower outlier
-										set countMethodRating to minRatingPercent
+									if useHistogramScaling then
+										set bin to minBin
+										repeat while (combinedCount > (item bin of binLimitCounts as real)) and bin < maxBin
+											set bin to bin + binIncrement
+										end repeat
+										set countMethodRating to bin * 10.0
+										--log "C:" & (countMethodRating as string)
 									else
-										-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
-										set countMethodRating to countMethodRating + minRatingPercent
+										set countMethodRating to ((combinedCount - minCount) / countScale)
+										-- Clean up outliers. This is important because the hyperbolic skewing equation will do strange things to the values otherwise
+										if countMethodRating > 1.0 then
+											set countMethodRating to 1.0
+										else if countMethodRating < 0.0 then
+											set countMethodRating to 0.0
+										end if
+										
+										--Hyperbolic skewing
+										set countMethodRating to skewCoefficient0 + (skewCoefficient1 * ((((countMethodRating + n) ^ 2) - nSquared) ^ 0.5) / m)
+										set countMethodRating to (ratingScale * countMethodRating) as integer
+										
+										if countMethodRating > ratingScale then
+											-- check for upper outlier
+											set countMethodRating to maxRatingPercent
+										else if countMethodRating < 0 then
+											--Check for lower outlier
+											set countMethodRating to minRatingPercent
+										else
+											-- Shift the rating up to the range (minRatingPercent --> maxRatingPercent) from (0 --> ratingScale)
+											set countMethodRating to countMethodRating + minRatingPercent
+										end if
 									end if
-									
 									--================================================================
 									-- End of Count-based rating
 									
@@ -427,7 +438,7 @@ script AutoRateController
 									set theRating to (frequencyMethodRating * (1.0 - ratingBias)) + (countMethodRating * ratingBias)
 									
 									-- Factor in previous rating memory
-									set theRating to ((rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
+									set theRating to ((the rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
 									--================================================================
 									
 									
@@ -438,15 +449,17 @@ script AutoRateController
 								-- Round to whole stars if requested to
 								if wholeStarRatings then
 									set theRating to (theRating / 20 as integer) * 20
+									
 								else
 									(*
-									Otherwise round to half stars. Previously ratings were not rounded to nearest 10,
-										which worked in itunes but I don't know if itunes would round the value internally or just drop down.
-										Also third party utilities might get confused by values like "24" when they expect "20".
-										I know GimmeSomeTunes does. This should fix that and have no negative consequences.
-									*)
+										Otherwise round to half stars. Previously ratings were not rounded to nearest 10,
+											which worked in itunes but I don't know if itunes would round the value internally or just drop down.
+											Also third party utilities might get confused by values like "24" when they expect "20".
+											I know GimmeSomeTunes does. This should fix that and have no negative consequences.
+										*)
 									set theRating to (theRating / 10 as integer) * 10
 								end if
+								
 								
 								-- Save to track
 								set rating of theTrack to theRating
@@ -577,7 +590,7 @@ script AutoRateController
 	
 	on initSettings()
 		--Used to determine if preferences need to be reset or changed. 
-		set currentPreferenceVersionID to "1.5.0-B2"
+		set currentPreferenceVersionID to "1.5.0-Beta4"
 		
 		tell user defaults
 			-- Register default entries (won't overwrite existing settings)
@@ -589,8 +602,7 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"ratingBias", contents:0.5}
 			make new default entry at end of default entries with properties {name:"ratingMemory", contents:0}
 			make new default entry at end of default entries with properties {name:"playlist", contents:"Entire library"}
-			--New preferences v1.5+
-			--Parameters for rating
+			--New in 1.5.0-Beta1
 			make new default entry at end of default entries with properties {name:"minFrequency", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"maxFrequency", contents:(-1.0 as number)}
 			make new default entry at end of default entries with properties {name:"minCount", contents:(-1.0 as number)}
@@ -601,14 +613,16 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"skewCoefficient0", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient1", contents:(0.0 as number)}
 			make new default entry at end of default entries with properties {name:"skewCoefficient2", contents:(0.0 as number)}
-			--Parameters for analysis
-			make new default entry at end of default entries with properties {name:"usePercentileScaleMethod", contents:true}
 			make new default entry at end of default entries with properties {name:"lowerPercentile", contents:(0.025 as number)}
 			make new default entry at end of default entries with properties {name:"upperPercentile", contents:(0.975 as number)}
-			--Parameters for both
 			make new default entry at end of default entries with properties {name:"skipCountFactor", contents:(1.0 as number)}
 			make new default entry at end of default entries with properties {name:"logStats", contents:false}
+			--New in 1.5.0-Beta3
 			make new default entry at end of default entries with properties {name:"preferenceVersionID", contents:"none"}
+			--New in 1.5.0-Beta4
+			make new default entry at end of default entries with properties {name:"binLimitFrequencies", contents:{-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}}
+			make new default entry at end of default entries with properties {name:"binLimitCounts", contents:{-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}}
+			make new default entry at end of default entries with properties {name:"useHistogramScaling", contents:true} --as opposed to using linear scaling
 			
 			register
 			
@@ -616,25 +630,23 @@ script AutoRateController
 			
 		end tell
 		
-		
-		
-		if savedPreferenceVersionID is not currentPreferenceVersionID then resetSettings(currentPreferenceVersionID)
+		if not (savedPreferenceVersionID = currentPreferenceVersionID) then resetSettings(currentPreferenceVersionID)
 		
 	end initSettings
 	
 	on resetSettings(versionStr)
+		display dialog "Some settings returned to defaults. Please check and adjust your settings back to your liking."
 		-- Any settings whose ranges or format changes should be in here to make sure they are over written.
+		clearCache()
 		tell user defaults
-			try
-				--changes in version 1.5.0 beta 2 "1.5.0-B2"
-				set contents of default entry "minRating" to 1.0 as number
-				set contents of default entry "maxRating" to 5.0 as number
-				
-				--changes in version..... next version?
-				
-				
-				set contents of default entry "preferenceVersionID" to versionStr as text
-			end try
+			--changes in version "1.5.0-Beta3"
+			set contents of default entry "minRating" to (1.0 as number)
+			set contents of default entry "maxRating" to (5.0 as number)
+			
+			
+			--always
+			set contents of default entry "preferenceVersionID" to (versionStr as text)
+			
 			register
 		end tell
 	end resetSettings
@@ -664,13 +676,17 @@ script AutoRateController
 			set skewCoefficient1 to contents of default entry "skewCoefficient1" as real
 			set skewCoefficient2 to contents of default entry "skewCoefficient2" as real
 			--Analysis
-			set usePercentileScaleMethod to contents of default entry "usePercentileScaleMethod" as boolean
 			set lowerPercentile to contents of default entry "lowerPercentile" as real
 			set upperPercentile to contents of default entry "upperPercentile" as real
 			set logStats to contents of default entry "logStats" as boolean
 			--Both
 			set skipCountFactor to contents of default entry "skipCountFactor"
 			if skipCountFactor is "°" then set skipCountFactor to 9999999
+			
+			--v 1.5.0Beta 4
+			set binLimitFrequencies to contents of default entry "binLimitFrequencies"
+			set binLimitCounts to contents of default entry "binLimitCounts"
+			set useHistogramScaling to contents of default entry "useHistogramScaling" as boolean
 			
 		end tell
 	end loadSettings
@@ -681,6 +697,8 @@ script AutoRateController
 		set maxFrequency to -1.0
 		set minCount to -1.0
 		set maxCount to -1.0
+		set binLimitFrequencies to {-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}
+		set binLimitCounts to {-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}
 		
 		set lastAnalysisDate to ""
 		saveCache()
@@ -695,37 +713,40 @@ script AutoRateController
 			set contents of default entry "minCount" to (minCount as number)
 			set contents of default entry "maxCount" to (maxCount as number)
 			
+			--new 1.5.0-Beta4
+			set contents of default entry "binLimitFrequencies" to binLimitFrequencies
+			set contents of default entry "binLimitCounts" to binLimitCounts
+			
 			--Unchanged
 			set contents of default entry "lastAnalysisDate" to lastAnalysisDate
 		end tell
 	end saveCache
 	
-	--Sorting subroutine added by Brandon. Used for percentile calculations
 	on unixSort(unsortedList)
 		(*
-		Though sorting could be done natively (albeit manually) in applescript, this runs about 50,000 times faster.
-			I tried it using Apple's sort sub routine @ 
-			
-			applescript://com.apple.scripteditor/?action=new&script=on%20simple_sort%28my_list%29%0D%09set
-			%20the%20index_list%20to%20%7B%7D%0D%09set%20the%20sorted_list%20to%20%7B%7D%0D
-			%09repeat%20%28the%20number%20of%20items%20in%20my_list%29%20times%0D%09%09set
-			%20the%20low_item%20to%20%22%22%0D%09%09repeat%20with%20i%20from%201%20to%20
-			%28number%20of%20items%20in%20my_list%29%0D%09%09%09if%20i%20is%20not%20in%20the
-			%20index_list%20then%0D%09%09%09%09set%20this_item%20to%20item%20i%20of%20my_list
-			%20as%20text%0D%09%09%09%09if%20the%20low_item%20is%20%22%22%20then%0D%09%09
-			%09%09%09set%20the%20low_item%20to%20this_item%0D%09%09%09%09%09set%20the
-			%20low_item_index%20to%20i%0D%09%09%09%09else%20if%20this_item%20comes%20before
-			%20the%20low_item%20then%0D%09%09%09%09%09set%20the%20low_item%20to%20this_item
-			%0D%09%09%09%09%09set%20the%20low_item_index%20to%20i%0D%09%09%09%09end%20if
-			%0D%09%09%09end%20if%0D%09%09end%20repeat%0D%09%09set%20the%20end%20of%20sorted_list
-			%20to%20the%20low_item%0D%09%09set%20the%20end%20of%20the%20index_list%20to%20the
-			%20low_item_index%0D%09end%20repeat%0D%09return%20the%20sorted_list%0Dend%20simple_sort
-			
-			Assuming that is as efficient as it's going to get (?) I killed the task after an hour in
-			favour of this code which takes ~1 second on my G4 for ~3000 songs. The only problem I
-			can see is if someone opts out of installing the BSD sub-system when installing OS X 
-			on their machine. Perhaps a 1-time warning about this?
-		*)
+        Though sorting could be done natively (albeit manually) in applescript, this runs about 50,000 times faster.
+            I tried it using Apple's sort sub routine @ 
+            
+            applescript://com.apple.scripteditor/?action=new&script=on%20simple_sort%28my_list%29%0D%09set
+            %20the%20index_list%20to%20%7B%7D%0D%09set%20the%20sorted_list%20to%20%7B%7D%0D
+            %09repeat%20%28the%20number%20of%20items%20in%20my_list%29%20times%0D%09%09set
+            %20the%20low_item%20to%20%22%22%0D%09%09repeat%20with%20i%20from%201%20to%20
+            %28number%20of%20items%20in%20my_list%29%0D%09%09%09if%20i%20is%20not%20in%20the
+            %20index_list%20then%0D%09%09%09%09set%20this_item%20to%20item%20i%20of%20my_list
+            %20as%20text%0D%09%09%09%09if%20the%20low_item%20is%20%22%22%20then%0D%09%09
+            %09%09%09set%20the%20low_item%20to%20this_item%0D%09%09%09%09%09set%20the
+            %20low_item_index%20to%20i%0D%09%09%09%09else%20if%20this_item%20comes%20before
+            %20the%20low_item%20then%0D%09%09%09%09%09set%20the%20low_item%20to%20this_item
+            %0D%09%09%09%09%09set%20the%20low_item_index%20to%20i%0D%09%09%09%09end%20if
+            %0D%09%09%09end%20if%0D%09%09end%20repeat%0D%09%09set%20the%20end%20of%20sorted_list
+            %20to%20the%20low_item%0D%09%09set%20the%20end%20of%20the%20index_list%20to%20the
+            %20low_item_index%0D%09end%20repeat%0D%09return%20the%20sorted_list%0Dend%20simple_sort
+            
+            Assuming that is as efficient as it's going to get (?) I killed the task after an hour in
+            favour of this code which takes ~1 second on my G4 for ~3000 songs. The only problem I
+            can see is if someone opts out of installing the BSD sub-system when installing OS X 
+            on their machine. Perhaps a 1-time warning about this? So far no complaints...
+        *)
 		set old_delims to AppleScript's text item delimiters
 		set AppleScript's text item delimiters to {ASCII character 10} -- always a linefeed
 		set the unsortedListString to (the unsortedList as string)
