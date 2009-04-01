@@ -590,9 +590,15 @@ script AutoRateController
 	
 	on initSettings()
 		--Used to determine if preferences need to be reset or changed. 
-		set currentPreferenceVersionID to "1.5.0-Beta4"
+		set currentPreferenceVersionID to "1.5.0"
+		set isFirstRun to true
 		
 		tell user defaults
+			
+			try
+				set isFirstRun to (contents of default entry "playlist" as string = "")
+			end try
+			
 			-- Register default entries (won't overwrite existing settings)
 			make new default entry at end of default entries with properties {name:"lastAnalysisDate", contents:""}
 			make new default entry at end of default entries with properties {name:"wholeStarRatings", contents:false}
@@ -624,29 +630,27 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"binLimitCounts", contents:{-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}}
 			make new default entry at end of default entries with properties {name:"useHistogramScaling", contents:true} --as opposed to using linear scaling
 			
-			register
-			
 			set savedPreferenceVersionID to contents of default entry "preferenceVersionID"
+			
+			make new default entry at end of default entries with properties {name:"preferenceVersionID", contents:currentPreferenceVersionID as text}
+			set contents of default entry "preferenceVersionID" to (currentPreferenceVersionID as text)
+			
+			register
 			
 		end tell
 		
-		if not (savedPreferenceVersionID = currentPreferenceVersionID) then resetSettings(currentPreferenceVersionID)
+		if (not isFirstRun and (savedPreferenceVersionID ­ currentPreferenceVersionID)) then resetSettings(currentPreferenceVersionID)
 		
 	end initSettings
 	
 	on resetSettings(versionStr)
-		display dialog "Some settings returned to defaults. Please check and adjust your settings back to your liking."
+		display alert "Some settings returned to defaults. Please check and adjust your settings back to your liking." as informational
 		-- Any settings whose ranges or format changes should be in here to make sure they are over written.
 		clearCache()
 		tell user defaults
 			--changes in version "1.5.0-Beta3"
 			set contents of default entry "minRating" to (1.0 as number)
 			set contents of default entry "maxRating" to (5.0 as number)
-			
-			
-			--always
-			set contents of default entry "preferenceVersionID" to (versionStr as text)
-			
 			register
 		end tell
 	end resetSettings
