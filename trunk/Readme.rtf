@@ -8,10 +8,10 @@
 {\author Mike Tyson}}\paperw11905\paperh16837\margl1440\margr1440\vieww12820\viewh11040\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f0\b\fs36 \cf0 AutoRate v1.5.0 beta 2
+\f0\b\fs36 \cf0 AutoRate v1.5.0
 \b0\fs24 \
 
-\i\fs20 16 March 2009
+\i\fs20 31 March 2009
 \i0\fs24 \
 \
 This application sets the rating for all tracks in your iTunes library according to how often each track is played, and how often each track is skipped.\
@@ -23,9 +23,11 @@ The formula uses a combination of play and skip frequency (averaged out over the
 \b0 \
 \
 \pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
-\ls1\ilvl0\cf0 {\listtext	\'95	}New highly customizable rating formula, thanks to Brandon Mol's hard work\
-{\listtext	\'95	}New interface style\
+\ls1\ilvl0\cf0 {\listtext	\'95	}New highly customizable rating formula by Brandon Mol\
+{\listtext	\'95	}New interface style by Michael Tyson\
 {\listtext	\'95	}New preferences window\
+{\listtext	\'95	}Automatic skewing based on a normal distribution histogram or optionally a set of manual skewing parameters to fine tune the results to your liking.\
+{\listtext	\'95	}See extras folder for a pre-made launch agent file (au.id.tyson.AutoRate.LaunchAgent.plist) to automatically run Autorate each day at 5am (you can edit this in property list editor). See below for instructions. This is included because as of OS X 10.5, crontabs "Cron jobs" are depreciated though still functional. If you use cron jobs in 10.5+ you get lots of pestering console messages and potentially experience system-sleep issues.  \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 
@@ -35,38 +37,28 @@ The formula uses a combination of play and skip frequency (averaged out over the
 By default, AutoRate will only rate tracks that you have not rated.  Thus, if you wish to continue using AutoRate to update your ratings, you will need to open AutoRate's preferences and allow AutoRate to override ratings.\
 \
 
-\b Automatic rating
+\b Automatic rating (in the scheduling sense, in the calculation sense it is always automatic)
 \b0 \
 \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \i \cf0 Rate Now.scpt
-\i0  is an Applescript that launches AutoRate, immediately begins the rating process, and quits after completion.  This can be run regularly from 
-\i cron
-\i0 , for example.\
+\i0  is an Applescript that launches AutoRate, immediately begins the rating process, and quits after completion.  This can be run regularly using OS X 10.5's launch daemon process, using the LaunchAgent mechanism.\
+\
+This will cause the 
+\i Rate Now
+\i0  script to be run at 5am (or other time if you edit the Launch Agent file included - au.id.Tyson.AutoRate.LaunchAgent.plist) every day.\
+\
 To call this script daily:\
 \
 \pard\tx220\tx720\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
 \ls2\ilvl0\cf0 {\listtext	\'95	}Put 
 \i Rate Now.scpt
 \i0  in ~/Library/Scripts\
-{\listtext	\'95	}Open the Terminal application\
-{\listtext	\'95	}Begin editing the crontab with: 
-\i crontab -e\
-\ls2\ilvl0
-\i0 {\listtext	\'95	}Press 'i' to begin inserting text\
-{\listtext	\'95	}Enter the following: 
-\i 0 3 * * * osascript ~/Library/Scripts/Rate\\ Now.scpt
-\i0 \
-{\listtext	\'95	}Press Escape, then Shift-ZZ to save and quit\
+{\listtext	\'95	}Put the Launch agent file included - au.id.tyson.AutoRate.LaunchAgent.plist in ~/Library/LaunchAgents\
+{\listtext	\'95	}Changes take effect on next login.\
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
-This will cause the 
-\i Rate Now
-\i0  script to be run at 3am every day.\
-Edit the 
-\i Rate Now
-\i0  script to change settings for playlist and whether the application should run hidden.\
 Note that for this to be useful, you should allow AutoRate to override ratings by unchecking 'Only set ratings for unrated tracks'.\
 \
 
@@ -75,6 +67,7 @@ Note that for this to be useful, you should allow AutoRate to override ratings b
 \
 The latest version of this application can be found at:\
 \
+http://code.google.com/p/autorate/downloads/list\
 http://tzisoftware.com/products/autorate\
 \
 
@@ -83,4 +76,7 @@ http://tzisoftware.com/products/autorate\
 \
 Questions or comments can be directed to the forum at http://tzisoftware.com/forum\
 \
-I hope you find this application useful!}
+Hopefully you find this application useful!\
+\
+Brandon Mol\
+Michael Tyson}
