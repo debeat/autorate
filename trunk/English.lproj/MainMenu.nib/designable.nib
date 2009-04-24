@@ -8,7 +8,8 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="623"/>
+			<integer value="622"/>
+			<integer value="582"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -162,7 +163,7 @@
 				<nil key="NSViewClass"/>
 				<string key="NSWindowContentMaxSize">{3.40282e+38, 3.40282e+38}</string>
 				<object class="NSView" key="NSWindowView" id="34209471">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -314,6 +315,7 @@
 						</object>
 					</object>
 					<string key="NSFrameSize">{424, 89}</string>
+					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1920, 1178}}</string>
 				<string key="NSMaxSize">{3.40282e+38, 3.40282e+38}</string>
@@ -4056,8 +4058,8 @@ RkEwQkWGkoSYmZmagQHcgQKnhoY</bytes>
 							<string key="appleScriptObjectName">main</string>
 						</object>
 					</object>
-					<string>{{230, 676}, {424, 89}}</string>
-					<string>{{230, 676}, {424, 89}}</string>
+					<string>{{414, 546}, {424, 89}}</string>
+					<string>{{414, 546}, {424, 89}}</string>
 					<reference ref="5"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSMutableDictionary">
@@ -4117,8 +4119,8 @@ RkEwQkWGkoSYmZmagQHcgQKnhoY</bytes>
 							<string key="appleScriptObjectName">preferences</string>
 						</object>
 					</object>
-					<string>{{223, 431}, {518, 288}}</string>
-					<string>{{223, 431}, {518, 288}}</string>
+					<string>{{338, 406}, {518, 288}}</string>
+					<string>{{338, 406}, {518, 288}}</string>
 					<boolean value="NO"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{147, 709}, {616, 0}}</string>
