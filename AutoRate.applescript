@@ -79,10 +79,6 @@ script AutoRateController
 		if minFrequency = -1.0 or minCount = -1.0 or maxFrequency = -1.0 or maxCount = -1.0 or binLimitFrequencies contains -1.0 or binLimitCounts contains -1.0 or (cacheResults and ((current date) - lastAnalysisDate) > (cacheTime * 60 * 60 * 24)) then
 			
 			-- Initialise statistical analysis temp values
-			set sumFrequency to 0
-			set sumSquaredFrequency to 0
-			set sumCount to 0
-			set sumSquaredCount to 0
 			set frequencyList to {}
 			set countList to {}
 			set sortedFrequencyList to {}
@@ -93,19 +89,12 @@ script AutoRateController
 				tell AutoRateController to set theAnalysisPlaylist to getAnalysisPlaylist()
 				with timeout of (20 * 60) seconds
 					tell application "iTunes"
-						if the name of theAnalysisPlaylist is "Movies" or the name of theAnalysisPlaylist is "TV Shows" or the name of theAnalysisPlaylist is "Applications" or the name of theAnalysisPlaylist is "Radio" or the name of theAnalysisPlaylist is "Ringtones" then
-							tell AutoRateController to display alert "The playlist selected for analysis does not contain audio tracks. Using the Music playlist instead." as informational
+						set tracksToAnalyseList to file tracks in theAnalysisPlaylist
+						if length of tracksToAnalyseList < 100 and name of theAnalysisPlaylist is not "Music" then
+							tell AutoRateController to display alert "At least 100 tracks are required for a meaningful statistical analysis. Using the Music playlist instead." as informational
 							set tracksToAnalyseList to file tracks in user playlist "Music"
-						else
-							
-							set tracksToAnalyseList to file tracks in theAnalysisPlaylist
-							if length of tracksToAnalyseList < 100 and name of theAnalysisPlaylist is not "Music" then
-								tell AutoRateController to display alert "At least 100 tracks are required for a meaningful statistical analysis. Using the Music playlist instead." as informational
-								set tracksToAnalyseList to file tracks in user playlist "Music"
-								
-							end if
-							set tracksToRateList to file tracks in theRatingPlaylist
 						end if
+						set tracksToRateList to file tracks in theRatingPlaylist
 					end tell
 				end timeout
 			on error errStr number errNumber
@@ -265,8 +254,10 @@ script AutoRateController
 			-- Load playlist
 			if tracksToRateList = {} then
 				try
-					tell AutoRateController to set theRatingPlaylist to getRatingPlaylist()
-					tell application "iTunes" to set tracksToRateList to file tracks in theRatingPlaylist
+					with timeout of (20 * 60) seconds
+						tell AutoRateController to set theRatingPlaylist to getRatingPlaylist()
+						tell application "iTunes" to set tracksToRateList to file tracks in theRatingPlaylist
+					end timeout
 					tell AutoRateController
 						setProgressLimit(length of tracksToRateList)
 						startProgress()
@@ -529,18 +520,26 @@ script AutoRateController
 	on getRatingPlaylist()
 		tell user defaults to set theRatingPlaylistName to contents of default entry "ratingPlaylist"
 		if theRatingPlaylistName = "Entire library" then
-			tell application "iTunes" to return library playlist 1
+			with timeout of (20 * 60) seconds
+				tell application "iTunes" to return library playlist 1
+			end timeout
 		else
-			tell application "iTunes" to return user playlist theRatingPlaylistName
+			with timeout of (20 * 60) seconds
+				tell application "iTunes" to return user playlist theRatingPlaylistName
+			end timeout
 		end if
 	end getRatingPlaylist
 	
 	on getAnalysisPlaylist()
 		tell user defaults to set theAnalysisPlaylistName to contents of default entry "analysisPlaylist"
 		if theAnalysisPlaylistName = "Entire library" then
-			tell application "iTunes" to return library playlist 1
+			with timeout of (20 * 60) seconds
+				tell application "iTunes" to return library playlist 1
+			end timeout
 		else
-			tell application "iTunes" to return user playlist theAnalysisPlaylistName
+			with timeout of (20 * 60) seconds
+				tell application "iTunes" to return user playlist theAnalysisPlaylistName
+			end timeout
 		end if
 	end getAnalysisPlaylist
 	
@@ -622,13 +621,13 @@ script AutoRateController
 	
 	on initSettings()
 		--Used to determine if preferences need to be reset or changed. 
-		set currentPreferenceVersionID to "1.5.1"
+		set currentPreferenceVersionID to "1.5.2"
 		set isFirstRun to true
 		
 		tell user defaults
 			
 			try
-				set isFirstRun to (contents of default entry "ratingPlaylist" as string = "")
+				set isFirstRun to (contents of default entry "preferenceVersionID" as string = "")
 			end try
 			
 			-- Register default entries (won't overwrite existing settings)
@@ -899,3 +898,11 @@ end choose menu item
 on will pop up theObject
 	(*Add your script here.*)
 end will pop up
+
+on keyboard down theObject event theEvent
+	(*Add your script here.*)
+end keyboard down
+
+on keyboard up theObject event theEvent
+	(*Add your script here.*)
+end keyboard up
