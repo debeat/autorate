@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>AutoRate</string>
 	<key>CFBundleIdentifier</key>
-	<string>au.id.tyson.AutoRate</string>
+	<string>ca.Brandon.Mol.AutoRate</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -19,7 +19,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.5.2</string>
+	<string>1.5.5</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
 	<key>NSMainNibFile</key>
