@@ -29,6 +29,8 @@
 		2756F28E0F6B2D7B00C8A344 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 2756F28D0F6B2D7B00C8A344 /* Credits.rtf */; };
 		276F1AEC0F520A92000C6C14 /* Rating.png in Resources */ = {isa = PBXBuildFile; fileRef = 276F1AEB0F520A92000C6C14 /* Rating.png */; };
 		279440DC0BE878B100BABDD7 /* AutoRate.icns in Resources */ = {isa = PBXBuildFile; fileRef = 279440DB0BE878B100BABDD7 /* AutoRate.icns */; };
+		CAB67D1710A114AD00A1DA60 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
+		CAB67D2810A114F500A1DA60 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
 		CADC9AE210913DF700DD6520 /* BWToolkitFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */; };
 		CADC9B2310913EF500DD6520 /* BWToolkitFramework.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */; };
 /* End PBXBuildFile section */
@@ -72,6 +74,8 @@
 				257572CC072881A4000BE9CA /* Cocoa.framework in Frameworks */,
 				257572CD072881A4000BE9CA /* AppleScriptKit.framework in Frameworks */,
 				CADC9AE210913DF700DD6520 /* BWToolkitFramework.framework in Frameworks */,
+				CAB67D1710A114AD00A1DA60 /* Foundation.framework in Frameworks */,
+				CAB67D2810A114F500A1DA60 /* AppKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,10 +177,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4E71A80508A2C90C0034BBD9 /* Build configuration list for PBXNativeTarget "AutoRate" */;
 			buildPhases = (
+				257572C6072881A4000BE9CA /* Resources */,
 				CADC9B1F10913E8900DD6520 /* CopyFiles */,
 				257572C3072881A4000BE9CA /* Headers */,
 				257572C4072881A4000BE9CA /* AppleScript */,
-				257572C6072881A4000BE9CA /* Resources */,
 				257572C9072881A4000BE9CA /* Sources */,
 				257572CB072881A4000BE9CA /* Frameworks */,
 			);
@@ -195,6 +199,9 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = NO;
+			};
 			buildConfigurationList = 4E71A80908A2C90C0034BBD9 /* Build configuration list for PBXProject "AutoRate" */;
 			compatibilityVersion = "Xcode 3.2";
 			hasScannedForEncodings = 1;
@@ -391,7 +398,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = /Applications;
+				INSTALL_PATH = "";
 				OTHER_OSAFLAGS = "-x";
 				PREBINDING = NO;
 				PRODUCT_NAME = AutoRate;
