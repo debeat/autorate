@@ -1,11 +1,7 @@
--- AutoRate.applescript
--- Rate tracks in iTunes based on play/skip frequency
--- 
---  Copyright 2007-2009 Tzi Software
---  http://tzisoftware.com
+
+--  Copyright 2007-2010 Brandon Mol and Micael Tyson
 --
--- Written by Brandon Mol ....  brandon.mol [at] gmail [dot] com
---GUI additions by Michael Tyson, Tzi Software
+-- Written by Brandon Mol and Michael Tyson, Tzi Software
 --
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -35,21 +31,14 @@ global useHalfStarForItemsWithMoreSkipsThanPlays
 global minRating
 global maxRating
 global skipCountFactor
-
-global skewCoefficient0
-global skewCoefficient1
-global skewCoefficient2
-
 global binLimitFrequencies
 global binLimitCounts
-
-global lowerPercentile
-global upperPercentile
-global useHistogramScaling
 global logStats
 global theNow
 global oldFI
 global timeoutValue
+global rateButton
+global backup
 
 property skipCountSlider : ""
 property ratingPlaylistPopup : ""
@@ -91,12 +80,12 @@ script AutoRateController
 						
 						set defaultPlaylist to name of item 1 of user playlists
 						
-						set tracksToAnalyseList to file tracks in theAnalysisPlaylist
+						set tracksToAnalyseList to file tracks in theAnalysisPlaylist whose video kind is none
 						if length of tracksToAnalyseList < 100 and name of theAnalysisPlaylist is not defaultPlaylist then
 							tell AutoRateController to display alert "At least 100 tracks are required for a meaningful statistical analysis. Using the " & defaultPlaylist & " playlist instead." as informational
 							set tracksToAnalyseList to file tracks in item 1 of user playlists
 						end if
-						set tracksToRateList to file tracks in theRatingPlaylist
+						set tracksToRateList to file tracks in theRatingPlaylist whose video kind is none
 						
 						
 						
@@ -120,22 +109,12 @@ script AutoRateController
 					
 					set numTracksToAnalyse to length of tracksToAnalyseList
 					
-					(*set mostRecentPlayedDate to date "Monday, January 1, 1900 12:00:00 AM"
-					
-					repeat with theTrack in tracksToAnalyseList
-						if not isRunning then exit repeat
-						
-						set the playedDate to the played date of theTrack
-						if playedDate > mostRecentPlayedDate then set mostRecentPlayedDate to playedDate	
-					end repeat
-					*)
-					set mostRecentPlayedDate to theNow
 					
 					repeat with theTrackNum from 1 to numTracksToAnalyse
 						if not isRunning then exit repeat
 						set theTrack to (a reference to item theTrackNum in the tracksToAnalyseList)
 						set theTrackCount to theTrackCount + 1
-						--do shell script "/bin/sleep 0.001"
+						
 						
 						-- log "Analysing track " & (theTrackCount as string)
 						
@@ -147,19 +126,19 @@ script AutoRateController
 								setSecondaryMessage("Analysing track " & (theTrackCount as string) & " of " & (numTracksToAnalyse as string))
 								incrementProgress()
 							end tell
-							
-							set playCount to the played count of theTrack
+							set playCount to (played count of theTrack) as integer
 							set skipCount to the (skipped count of theTrack) * skipCountFactor
+							set trackLength to 1 --(the finish of theTrack) - (the start of theTrack)
 							
 							if playCount > skipCount then
 								set numAnalysed to numAnalysed + 1
 								set theDateAdded to (date added of theTrack)
-								set combinedCount to playCount - skipCount
+								set combinedCount to ((playCount - skipCount) * trackLength) as integer
 								if combinedCount is less than or equal to 0 then
 									set combinedCount to 0
-									set combinedFrequency to 536870911
+									set combinedFrequency to 0.0 as real
 								else
-									set combinedFrequency to ((mostRecentPlayedDate - theDateAdded) / combinedCount) as integer
+									set combinedFrequency to (combinedCount / (theNow - theDateAdded)) as real
 								end if
 								copy combinedCount to the end of countList
 								copy combinedFrequency to the end of frequencyList
@@ -185,10 +164,10 @@ script AutoRateController
 					if isRunning then
 						try
 							--sort the lists so we can find the item at lower and upper percentiles and bin the values in a histogram.
-							set the sortedFrequencyList to the reverse of my unixSort(the frequencyList)
+							set the sortedFrequencyList to my unixSort(the frequencyList)
 							set the sortedCountList to my unixSort(the countList)
 							
-							set binLimits to {0.01, 0.04, 0.11, 0.23, 0.4, 0.6, 0.77, 0.89, 0.96, 1.0} --Cumulative normal density for each bin
+							set binLimits to {0.0, 0.01, 0.04, 0.11, 0.23, 0.4, 0.6, 0.77, 0.89, 0.96} --Cumulative normal density for each bin
 							set binLimitFrequencies to {}
 							set binLimitCounts to {}
 							
@@ -223,6 +202,7 @@ script AutoRateController
 		
 		set minRatingPercent to minRating * 20
 		set maxRatingPercent to maxRating * 20
+		set the backup to {}
 		
 		
 		-- Second loop: Assign ratings
@@ -232,12 +212,12 @@ script AutoRateController
 				with timeout of (timeoutValue) seconds
 					
 					if tracksToRateList = {} then
-						log "Analysis not run..."
+						-- log "Analysis not run..."
 						try
 							tell AutoRateController
 								set theRatingPlaylist to getRatingPlaylist()
 							end tell
-							set tracksToRateList to file tracks in theRatingPlaylist
+							set tracksToRateList to file tracks in theRatingPlaylist whose video kind is none
 							tell AutoRateController
 								setProgressLimit(length of tracksToRateList)
 								startProgress()
@@ -258,8 +238,6 @@ script AutoRateController
 					tell AutoRateController
 						setMainMessage("Assigning Ratings...")
 					end tell
-					-- log ((minFrequency as string) & "/" & (maxFrequency as string) & "/" & (minCount as string) & "/" & (maxCount as string))
-					
 					--Correct minimum rating value if user selects whole-star ratings or to reserve 1/2 star for disliked songs
 					--0 star ratings are always reserved for songs with no skips and no plays
 					if (wholeStarRatings or useHalfStarForItemsWithMoreSkipsThanPlays) and (minRatingPercent < 20) then
@@ -288,23 +266,29 @@ script AutoRateController
 					set numTracksToRate to the length of tracksToRateList
 					
 					
-					(*set mostRecentPlayedDate to date "Monday, January 1, 1900 12:00:00 AM"
-					repeat with theTrack in tracksToRateList
-						if not isRunning then exit repeat
-						set the playedDate to the played date of theTrack
-						if playedDate > mostRecentPlayedDate then set mostRecentPlayedDate to playedDate
-					end repeat
-					*)
-					set mostRecentPlayedDate to theNow
 					set timeoutCount to 0
 					
-					repeat with theTrackNum from 1 to numTracksToRate --with theTrack in tracksToRateList
+					
+					if logStats then
+						set statsLogFile to ((path to desktop as text) & "stats.csv")
+						try
+							set dataStream to open for access file statsLogFile with write permission
+							set eof of dataStream to 0
+							write ("Count,Frequency" & {ASCII character 10}) to dataStream starting at eof
+						on error
+							try
+								close access file statsLogFile
+							end try
+						end try
+					end if
+					
+					
+					repeat with theTrackNum from 1 to numTracksToRate
 						
 						if not isRunning then
 							exit repeat
 						end if
 						set theTrack to (a reference to item theTrackNum of tracksToRateList)
-						--set theTrack to item theTrackNum of tracksToRateList
 						set theTrackCount to theTrackCount + 1
 						try
 							tell AutoRateController
@@ -320,8 +304,9 @@ script AutoRateController
 								repeat while attempts ² maxAttempts and unsuccessful
 									with timeout of 2 seconds
 										try
-											set playCount to (played count of theTrack)
+											set playCount to (played count of theTrack) as integer
 											set skipCount to (skipped count of theTrack) * skipCountFactor --weighted skips relative to plays
+											
 											set theDateAdded to (date added of theTrack)
 											set unsuccessful to false
 										on error
@@ -339,15 +324,18 @@ script AutoRateController
 								set combinedCount to (playCount - skipCount) as integer
 								if combinedCount is less than or equal to 0 then
 									set combinedCount to 0
-									set combinedFrequency to 536870911
+									set combinedFrequency to 0.0 as real
 								else
-									set combinedFrequency to ((mostRecentPlayedDate - theDateAdded) / combinedCount) as integer
-									if combinedFrequency < 0 then
-										display dialog "Date last played is before date added"
-										combinedFrequency = 0
-									end if
+									set combinedFrequency to (combinedCount / (theNow - theDateAdded)) as real
 								end if
 								
+								if logStats then
+									try
+										write ((combinedCount as text) & "," & (combinedFrequency as text) & {ASCII character 10}) to dataStream starting at eof
+									end try
+								end if
+								
+								set theOldRating to rating of theTrack
 								if playCount = 0 and skipCount = 0 then
 									set theRating to 0
 									--Override calculated rating if the weighted skip count is greater than the play count and ignores rating memory
@@ -356,17 +344,17 @@ script AutoRateController
 								else
 									
 									--Frequency method
-									set bin to minBin
-									repeat while combinedFrequency < (item bin of binLimitFrequencies) and bin < maxBin
-										set bin to bin + binIncrement
+									set bin to maxBin
+									repeat while combinedFrequency < (item bin of binLimitFrequencies) and bin > minBin
+										set bin to bin - binIncrement
 									end repeat
 									set frequencyMethodRating to bin * 10.0
 									--log "F:" & (frequencyMethodRating as string)
 									
 									--Count method
-									set bin to minBin
-									repeat while combinedCount > (item bin of binLimitCounts) and bin < maxBin
-										set bin to bin + binIncrement
+									set bin to maxBin
+									repeat while combinedCount < (item bin of binLimitCounts) and bin > minBin
+										set bin to bin - binIncrement
 									end repeat
 									set countMethodRating to bin * 10.0
 									--log "C:" & (countMethodRating as string)
@@ -376,12 +364,10 @@ script AutoRateController
 									
 									-- Factor in previous rating memory
 									if ratingMemory > 0.0 then
-										set theRating to ((rating of theTrack) * ratingMemory) + (theRating * (1.0 - ratingMemory))
+										set theRating to ((theOldRating) * ratingMemory) + (theRating * (1.0 - ratingMemory))
 									end if
 									
 								end if
-								
-								
 								
 								-- Round to whole stars if requested to
 								if wholeStarRatings then
@@ -390,8 +376,14 @@ script AutoRateController
 									set theRating to (theRating / 10 as integer) * 10
 								end if
 								
+								set the persistentID to the persistent ID of theTrack as text
+								
 								-- Save to track
 								ignoring application responses
+									set the backupItem to {}
+									copy the persistentID as text to the end of the backupItem
+									copy the theOldRating as integer to the end of the backupItem
+									copy the backupItem to the end of the backup
 									set the rating of theTrack to theRating
 								end ignoring
 								--log "rating set successfully."
@@ -417,10 +409,21 @@ script AutoRateController
 							end if
 						end try
 					end repeat
-					--end ignoring
+					if logStats then
+						try
+							close access dataStream
+						on error
+							try
+								close access file statsLogFile
+							end try
+						end try
+					end if
 				end timeout
 			end tell
+			saveBackup()
 		end if
+		
+		
 		
 		-- log "Finished"
 		if analysisTrackErrors is not "" or rateTrackErrors is not "" then
@@ -439,6 +442,98 @@ script AutoRateController
 		set isRunning to false
 		
 	end run
+	
+	on revertRatings()
+		
+		loadSettings()
+		set theNow to current date
+		tell user defaults to set the backup to the contents of default entry "backup"
+		if isRunning then
+			-- Load playlist
+			tell application "iTunes"
+				with timeout of (timeoutValue) seconds
+					try
+						
+						tell AutoRateController
+							set theRatingPlaylist to getRatingPlaylist()
+						end tell
+						set tracksToRateList to file tracks in theRatingPlaylist whose video kind is none
+						set numTracksToRate to the length of tracksToRateList
+					on error errStr number errNumber
+						-- log "error " & errStr & ", number " & (errNumber as string)
+						display dialog "Encountered error " & (errNumber as string) & " (" & errStr & ") while attempting to obtain iTunes playlist.  Please report this to the developer."
+						tell AutoRateController
+							endProgress()
+							endLabel()
+							set isRunning to false
+						end tell
+						return
+					end try
+					
+					numTracksToRate = 0
+					set theTrackCount to 0
+					if isRunning then
+						tell AutoRateController
+							setMainMessage("Restoring Previous Ratings...")
+						end tell
+						
+						tell AutoRateController
+							setProgressLimit(numTracksToRate)
+							startProgress()
+						end tell
+					end if
+					
+					repeat with theTrackNum from 1 to numTracksToRate
+						if not isRunning then
+							exit repeat
+						end if
+						set theTrack to (a reference to item theTrackNum of tracksToRateList)
+						set theTrackCount to theTrackCount + 1
+						
+						tell AutoRateController
+							incrementProgress()
+							setSecondaryMessage("Reverting track " & (theTrackCount as string) & " of " & numTracksToRate)
+						end tell
+						
+						
+						set backup2 to {}
+						set backupItemNum to 0
+						set backupSize to the length of backup
+						repeat with backupItemNum from 1 to backupSize
+							if not isRunning then
+								exit repeat
+							end if
+							set backupItem to (a reference to item backupItemNum of backup)
+							set the persistentID to item 1 in the backupItem
+							if the persistentID = (persistent ID of theTrack) then
+								set the rating of theTrack to the item 2 in the backupItem as integer
+								try
+									if backupItemNum > 1 then
+										set backup2 to items 1 thru (backupItemNum - 1) of backup & items (backupItemNum + 1) thru -1 of backup
+										set backup to backup2
+									end if
+								end try
+								
+								exit repeat
+							end if
+						end repeat
+					end repeat
+				end timeout
+			end tell
+		end if
+		
+		
+		set the title of the button "revertRatingsButton" of window "main" to "Revert Ratings"
+		set the enabled of the button "revertRatingsButton" of window "main" to true
+		endProgress()
+		endLabel()
+		set isRunning to false
+	end revertRatings
+	
+	on saveBackup()
+		tell user defaults to set the contents of default entry "backup" to the backup
+	end saveBackup
+	
 	
 	on getRatingPlaylist()
 		tell user defaults to set theRatingPlaylistName to contents of default entry "ratingPlaylist"
@@ -460,11 +555,6 @@ script AutoRateController
 			end timeout
 		end tell
 	end getAnalysisPlaylist
-	
-	on abort()
-		set isRunning to false
-		endingButton()
-	end abort
 	
 	on updateUI()
 		tell window "main" to update
@@ -507,22 +597,9 @@ script AutoRateController
 		set contents of text field "secondaryMessage" of window "main" to message
 	end setSecondaryMessage
 	
-	on startButton()
-		set title of button "button" of window "main" to "Cancel"
-	end startButton
-	
-	on endingButton()
-		tell button "button" of window "main"
-			set title to "Aborting"
-			set enabled to false
-		end tell
-	end endingButton
-	
 	on endButton()
-		tell button "button" of window "main"
-			set title to "Begin"
-			set enabled to true
-		end tell
+		set the title of rateButton to "Begin Rating"
+		set the enabled of rateButton to true
 	end endButton
 	
 	on endLabel()
@@ -538,7 +615,7 @@ script AutoRateController
 	on initSettings()
 		
 		--Used to determine if preferences need to be reset or changed. 
-		set currentPreferenceVersionID to "1.5.8"
+		set currentPreferenceVersionID to "1.6"
 		set isFirstRun to true
 		tell application "iTunes" to set defaultPlaylist to ((name of (item 1 of user playlists)) as text)
 		tell user defaults
@@ -566,6 +643,7 @@ script AutoRateController
 			make new default entry at end of default entries with properties {name:"analysisPlaylist", contents:(defaultPlaylist as text)}
 			make new default entry at end of default entries with properties {name:"preferenceVersionID", contents:"none"}
 			make new default entry at end of default entries with properties {name:"timeoutValue", contents:(30 as number)}
+			make new default entry at end of default entries with properties {name:"backup", contents:{""}}
 			register
 			
 			set savedPreferenceVersionID to contents of default entry "preferenceVersionID"
@@ -599,6 +677,7 @@ script AutoRateController
 			set contents of default entry "binLimitCounts" to {-1 as number, -1 as number, -1 as number, -1 as number, -1 as number, -1 as number, -1 as number, -1 as number, -1 as number, -1 as number}
 			set contents of default entry "ratingPlaylist" to (defaultPlaylist as text)
 			set contents of default entry "analysisPlaylist" to (defaultPlaylist as text)
+			set contents of default entry "logStats" to false
 			register
 		end tell
 	end resetSettings
@@ -654,20 +733,38 @@ script AutoRateController
 end script
 
 on clicked theObject
-	if name of theObject is "clearCacheButton" then
+	if the name of theObject is "clearCacheButton" then
 		tell AutoRateController to clearCache()
-		
-	else if name of theObject is "reportButton" then
+	else if the name of theObject is "reportButton" then
 		close panel (window of theObject)
-	else
+	else if the name of theObject is "beginRatingButton" then
 		if not isRunning then
+			set rateButton to theObject
 			set isRunning to true
 			tell AutoRateController
-				startButton()
+				set the title of theObject to "Cancel"
 				run
 			end tell
 		else
-			tell AutoRateController to abort()
+			tell AutoRateController
+				set isRunning to false
+				set the title of theObject to "Aborting"
+				set enabled of theObject to false
+			end tell
+		end if
+	else if the name of theObject is "revertRatingsButton" then
+		if not isRunning then
+			set isRunning to true
+			tell AutoRateController
+				set the title of theObject to "Cancel"
+				revertRatings()
+			end tell
+		else
+			tell AutoRateController
+				set isRunning to false
+				set the title of theObject to "Aborting"
+				set enabled of theObject to false
+			end tell
 		end if
 	end if
 end clicked
@@ -682,25 +779,27 @@ end will finish launching
 
 on action theObject
 	if name of theObject is "skipCountSlider" then
-		if content of theObject is 2.0 then
+		if content of theObject = 2.0 then
 			set skipCountFactor to "°"
 		else if content of theObject = 1 then
 			set skipCountFactor to 1
-		else if content of theObject ² 1 then
-			set skipCountFactor to text 1 through 3 of (content of theObject as string)
+		else if content of theObject = 0.0 then
+			set skipCountFactor to 0
+		else if content of theObject < 1 then
+			--set skipCountFactor to text 1 through 3 of (content of theObject as string)
+			set skipCountFactor to text 1 through 4 of ((1 / (1 + (4 * ((1 - (content of theObject) as real) / 0.8))) as string) & "0000")
 		else
-			set skipCountFactor to round (1 + (4 * (((content of theObject as real) - 1.0) / 0.82)))
+			set skipCountFactor to round (1 + (4 * (((content of theObject as real) - 1.0) / 0.8)))
 		end if
 		tell user defaults
 			set contents of default entry "skipCountFactor" to skipCountFactor
 			register
 		end tell
-		
-		
 	end if
 end action
 
 on awake from nib theObject
+	
 	if name of theObject is "ratingPlaylist" then
 		try
 			tell user defaults to set theRatingPlaylistName to contents of default entry "ratingPlaylist"
@@ -736,7 +835,9 @@ on awake from nib theObject
 		on error
 			#do nothing
 		end try
+		
 	else if name of theObject is "skipCountSlider" then
+		
 		set skipCountSlider to theObject
 		
 		-- Set value of skip count slider
@@ -750,6 +851,8 @@ on awake from nib theObject
 			set content of skipCountSlider to ((((skipCountFactor - 1) / 4) * 0.8) + 1)
 		end if
 	end if
+	
+	
 	
 end awake from nib
 
