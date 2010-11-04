@@ -255,6 +255,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -305,7 +307,9 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>23</integer>
+									<integer>16</integer>
+									<integer>13</integer>
+									<integer>12</integer>
 									<integer>0</integer>
 								</array>
 							</array>
@@ -357,7 +361,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>CA121E391280EB8300969F91</string>
+										<string>CA914BB11282831C00C77952</string>
 										<key>history</key>
 										<array>
 											<string>CADD6573124ECF38006B72D4</string>
@@ -366,7 +370,7 @@
 											<string>CADD6662124EDC40006B72D4</string>
 											<string>CA121E361280EB8300969F91</string>
 											<string>CA121E371280EB8300969F91</string>
-											<string>CA121E381280EB8300969F91</string>
+											<string>CA121E391280EB8300969F91</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -378,14 +382,14 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 0}, {1640, 866}}</string>
+								<string>{{0, 0}, {1640, 863}}</string>
 								<key>RubberWindowFrame</key>
 								<string>0 133 1920 1044 0 0 1920 1178 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
 							<key>Proportion</key>
-							<string>866pt</string>
+							<string>863pt</string>
 						</dict>
 						<dict>
 							<key>ContentConfiguration</key>
@@ -398,14 +402,14 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 871}, {1640, 132}}</string>
+								<string>{{0, 868}, {1640, 135}}</string>
 								<key>RubberWindowFrame</key>
 								<string>0 133 1920 1044 0 0 1920 1178 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
 							<key>Proportion</key>
-							<string>132pt</string>
+							<string>135pt</string>
 						</dict>
 					</array>
 					<key>Proportion</key>
@@ -424,9 +428,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>CA121E3A1280EB8300969F91</string>
+				<string>CA914BB21282831C00C77952</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>CA121E3B1280EB8300969F91</string>
+				<string>CA914BB31282831C00C77952</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -547,7 +551,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>310438787.287956</real>
+	<real>310543132.63502401</real>
 	<key>ToolbarDisplayMode</key>
 	<integer>1</integer>
 	<key>ToolbarIsVisible</key>
@@ -562,7 +566,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>CAA55D9F0FEEE89B00BA0D4C</string>
 		<string>/Users/brandon/XCode_Projects/AutoRate/AutoRate.xcodeproj</string>
 	</array>
@@ -644,7 +647,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>CAA55D9F0FEEE89B00BA0D4C</string>
-				<string>CA121E2F1280EB8100969F91</string>
+				<string>CA914BB41282831C00C77952</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
