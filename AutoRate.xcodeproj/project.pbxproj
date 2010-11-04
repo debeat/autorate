@@ -21,7 +21,6 @@
 
 /* Begin PBXBuildFile section */
 		257572C5072881A4000BE9CA /* AutoRate.applescript in AppleScript */ = {isa = PBXBuildFile; fileRef = DA206CF3015C4E8B03C91932 /* AutoRate.applescript */; settings = {ATTRIBUTES = (Debug, ); }; };
-		257572C7072881A4000BE9CA /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		257572C8072881A4000BE9CA /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		257572CA072881A4000BE9CA /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		257572CC072881A4000BE9CA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -31,18 +30,19 @@
 		279440DC0BE878B100BABDD7 /* AutoRate.icns in Resources */ = {isa = PBXBuildFile; fileRef = 279440DB0BE878B100BABDD7 /* AutoRate.icns */; };
 		CAB67D1710A114AD00A1DA60 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
 		CAB67D2810A114F500A1DA60 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
-		CADC9AE210913DF700DD6520 /* BWToolkitFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */; };
-		CADC9B2310913EF500DD6520 /* BWToolkitFramework.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */; };
+		CADD65E7124ED1B8006B72D4 /* BWToolkitFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CADD65B0124ED189006B72D4 /* BWToolkitFramework.framework */; };
+		CADD65E8124ED1C3006B72D4 /* BWToolkitFramework.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CADD65B0124ED189006B72D4 /* BWToolkitFramework.framework */; };
+		CADD663F124EDB64006B72D4 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = CADD663E124EDB64006B72D4 /* MainMenu.nib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		CADC9B1F10913E8900DD6520 /* CopyFiles */ = {
+		CAB358251183978200CA1855 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				CADC9B2310913EF500DD6520 /* BWToolkitFramework.framework in CopyFiles */,
+				CADD65E8124ED1C3006B72D4 /* BWToolkitFramework.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,11 +57,11 @@
 		276F1AEB0F520A92000C6C14 /* Rating.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Rating.png; sourceTree = "<group>"; };
 		279440DB0BE878B100BABDD7 /* AutoRate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AutoRate.icns; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		65359356078DD41800E8BB2F /* AppleScriptKit.sdef */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.sdef; name = AppleScriptKit.sdef; path = /System/Library/Frameworks/AppleScriptKit.framework/Versions/A/Resources/AppleScriptKit.sdef; sourceTree = "<absolute>"; };
-		CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = BWToolkitFramework.framework; path = Resources/BWToolkitFramework.framework; sourceTree = "<group>"; };
+		CADD65B0124ED189006B72D4 /* BWToolkitFramework.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BWToolkitFramework.framework; path = Library/Frameworks/BWToolkitFramework.framework; sourceTree = DEVELOPER_DIR; };
+		CADD663E124EDB64006B72D4 /* MainMenu.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MainMenu.nib; sourceTree = "<group>"; };
 		DA206CF1015C4E2903C91932 /* AppleScriptKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppleScriptKit.framework; path = /System/Library/Frameworks/AppleScriptKit.framework; sourceTree = "<absolute>"; };
 		DA206CF3015C4E8B03C91932 /* AutoRate.applescript */ = {isa = PBXFileReference; explicitFileType = sourcecode.applescript; fileEncoding = 30; indentWidth = 4; path = AutoRate.applescript; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
 /* End PBXFileReference section */
@@ -71,9 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CADD65E7124ED1B8006B72D4 /* BWToolkitFramework.framework in Frameworks */,
 				257572CC072881A4000BE9CA /* Cocoa.framework in Frameworks */,
 				257572CD072881A4000BE9CA /* AppleScriptKit.framework in Frameworks */,
-				CADC9AE210913DF700DD6520 /* BWToolkitFramework.framework in Frameworks */,
 				CAB67D1710A114AD00A1DA60 /* Foundation.framework in Frameworks */,
 				CAB67D2810A114F500A1DA60 /* AppKit.framework in Frameworks */,
 			);
@@ -95,7 +95,7 @@
 			children = (
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 				DA206CF1015C4E2903C91932 /* AppleScriptKit.framework */,
-				CADC9AE110913DF700DD6520 /* BWToolkitFramework.framework */,
+				CADD65B0124ED189006B72D4 /* BWToolkitFramework.framework */,
 			);
 			name = "Linked Frameworks";
 			sourceTree = "<group>";
@@ -120,6 +120,7 @@
 		29B97314FDCFA39411CA2CEA /* AutoRate */ = {
 			isa = PBXGroup;
 			children = (
+				CADD663E124EDB64006B72D4 /* MainMenu.nib */,
 				080E96DDFE201D6D7F000001 /* Scripts */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
@@ -144,7 +145,6 @@
 			children = (
 				276F1AEB0F520A92000C6C14 /* Rating.png */,
 				279440DB0BE878B100BABDD7 /* AutoRate.icns */,
-				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
 				65359356078DD41800E8BB2F /* AppleScriptKit.sdef */,
 			);
@@ -177,12 +177,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4E71A80508A2C90C0034BBD9 /* Build configuration list for PBXNativeTarget "AutoRate" */;
 			buildPhases = (
+				CAB358251183978200CA1855 /* CopyFiles */,
+				257572CB072881A4000BE9CA /* Frameworks */,
 				257572C6072881A4000BE9CA /* Resources */,
-				CADC9B1F10913E8900DD6520 /* CopyFiles */,
 				257572C3072881A4000BE9CA /* Headers */,
 				257572C4072881A4000BE9CA /* AppleScript */,
 				257572C9072881A4000BE9CA /* Sources */,
-				257572CB072881A4000BE9CA /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -204,7 +204,14 @@
 			};
 			buildConfigurationList = 4E71A80908A2C90C0034BBD9 /* Build configuration list for PBXProject "AutoRate" */;
 			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* AutoRate */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -219,7 +226,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				257572C7072881A4000BE9CA /* MainMenu.nib in Resources */,
+				CADD663F124EDB64006B72D4 /* MainMenu.nib in Resources */,
 				257572C8072881A4000BE9CA /* InfoPlist.strings in Resources */,
 				279440DC0BE878B100BABDD7 /* AutoRate.icns in Resources */,
 				276F1AEC0F520A92000C6C14 /* Rating.png in Resources */,
@@ -249,14 +256,6 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				29B97319FDCFA39411CA2CEA /* English */,
-			);
-			name = MainMenu.nib;
-			sourceTree = "<group>";
-		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -275,6 +274,8 @@
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"\"$(SRCROOT)/Resources/BWToolkit\"",
 					"\"$(SRCROOT)/Resources\"",
+					"\"$(SRCROOT)/..\"",
+					"\"$(DEVELOPER_FRAMEWORKS_DIR)\"",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/Resources/BWToolkit\"";
 				GCC_ENABLE_SSE41_EXTENSIONS = YES;
@@ -354,7 +355,7 @@
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_UNROLL_LOOPS = NO;
-				GCC_VERSION = 4.0;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
@@ -364,7 +365,7 @@
 				IBC_STRIP_NIBS = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
+				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 			};
@@ -385,6 +386,8 @@
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 					"\"$(SRCROOT)/Resources/BWToolkit\"",
 					"\"$(SRCROOT)/Resources\"",
+					"\"$(SRCROOT)/..\"",
+					"\"$(DEVELOPER_FRAMEWORKS_DIR)\"",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/Resources/BWToolkit\"";
 				GCC_ENABLE_SSE41_EXTENSIONS = YES;
